@@ -1,0 +1,17 @@
+{
+  "repo": "your-github-username/pbl4-air-quality",
+  "readme_path": "README.md",
+  "members": {
+    "Đạt": "dat-github-username",
+    "Bình": "binh-github-username",
+    "Lợi": "loi-github-username",
+    "Quyến": "quyen-github-username"
+  },
+  "labels": {
+    "iot": "1D76DB",
+    "backend": "0E8A16",
+    "ai": "5319E7",
+    "web": "E4E669",
+    "nhom": "B60205"
+  }
+}
