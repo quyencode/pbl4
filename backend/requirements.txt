@@ -1,0 +1,9 @@
+fastapi==0.115.0
+uvicorn[standard]==0.30.6
+paho-mqtt==1.6.1
+influxdb-client==1.44.0
+psycopg2-binary==2.9.9
+SQLAlchemy==2.0.32
+pydantic==2.9.0
+python-dotenv==1.0.1
+websockets==13.0
