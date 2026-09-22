@@ -1,0 +1,55 @@
+version: "3.8"
+
+# Hạ tầng nền cho dự án PBL4 - Giám sát & Dự báo Chất lượng Không khí
+# Chạy: docker compose up -d
+# Dừng:  docker compose down
+
+services:
+  # --- MQTT Broker: nhận dữ liệu realtime từ các node cảm biến ESP32 ---
+  mosquitto:
+    image: eclipse-mosquitto:2
+    container_name: aqi_mosquitto
+    restart: unless-stopped
+    ports:
+      - "1883:1883"   # MQTT
+      - "9001:9001"   # MQTT over WebSocket (dùng cho debug/browser client)
+    volumes:
+      - ./mosquitto/config:/mosquitto/config
+      - ./mosquitto/data:/mosquitto/data
+      - ./mosquitto/log:/mosquitto/log
+
+  # --- InfluxDB: lưu trữ dữ liệu chuỗi thời gian (đo lường theo phút/giờ) ---
+  influxdb:
+    image: influxdb:2.7
+    container_name: aqi_influxdb
+    restart: unless-stopped
+    ports:
+      - "8086:8086"
+    environment:
+      DOCKER_INFLUXDB_INIT_MODE: setup
+      DOCKER_INFLUXDB_INIT_USERNAME: ${INFLUXDB_USERNAME:-admin}
+      DOCKER_INFLUXDB_INIT_PASSWORD: ${INFLUXDB_PASSWORD:-admin12345}
+      DOCKER_INFLUXDB_INIT_ORG: ${INFLUXDB_ORG:-pbl4}
+      DOCKER_INFLUXDB_INIT_BUCKET: ${INFLUXDB_BUCKET:-air_quality}
+      DOCKER_INFLUXDB_INIT_ADMIN_TOKEN: ${INFLUXDB_TOKEN:-devtoken12345}
+    volumes:
+      - influxdb_data:/var/lib/influxdb2
+
+  # --- PostgreSQL: lưu dữ liệu quan hệ (node, người dùng, ngưỡng cảnh báo) ---
+  postgres:
+    image: postgres:16
+    container_name: aqi_postgres
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-aqi_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-aqi_pass}
+      POSTGRES_DB: ${POSTGRES_DB:-aqi_db}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/init_postgres.sql:/docker-entrypoint-initdb.d/init_postgres.sql
+
+volumes:
+  influxdb_data:
+  postgres_data:

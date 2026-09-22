@@ -1,0 +1,44 @@
+# CODEOWNERS — GitHub tự động thêm đúng người vào mục "Reviewers" của Pull Request
+# dựa theo thư mục/file bị thay đổi.
+#
+# ⚠️ BẮT BUỘC: thay các placeholder bên dưới (vd. @dat-github-username) bằng
+# username GitHub THẬT của từng thành viên trước khi dùng (không có "@" thật
+# thì GitHub sẽ bỏ qua rule đó và không báo lỗi gì cả — dễ bị quên).
+#
+# Đặt file này tại: .github/CODEOWNERS (GitHub tự nhận diện, không cần cấu hình gì thêm)
+
+# ----------------------------------------------------------------------------
+# Mặc định — áp dụng cho mọi file không khớp rule cụ thể nào bên dưới
+# ----------------------------------------------------------------------------
+*                       @quyen-github-username
+
+# ----------------------------------------------------------------------------
+# Khối IoT / Cảm biến & Thu thập dữ liệu — Đạt
+# ----------------------------------------------------------------------------
+/iot/                   @dat-github-username
+
+# ----------------------------------------------------------------------------
+# Khối Mạng máy tính / Backend & Database — Bình
+# ----------------------------------------------------------------------------
+/backend/               @binh-github-username
+/database/              @binh-github-username
+/docker-compose.yml     @binh-github-username
+/.env.example           @binh-github-username
+/mosquitto/             @binh-github-username
+
+# ----------------------------------------------------------------------------
+# Khối AI / Dự báo chất lượng không khí — Lợi
+# ----------------------------------------------------------------------------
+/ai/                    @loi-github-username
+
+# ----------------------------------------------------------------------------
+# Khối Web Dashboard / Tích hợp hệ thống & QA — Quyến
+# ----------------------------------------------------------------------------
+/frontend/              @quyen-github-username
+/tests/                 @quyen-github-username
+
+# ----------------------------------------------------------------------------
+# Tài liệu chung của dự án — cả 4 người cùng review khi có thay đổi
+# ----------------------------------------------------------------------------
+/README.md              @dat-github-username @binh-github-username @loi-github-username @quyen-github-username
+/docs/                  @dat-github-username @binh-github-username @loi-github-username @quyen-github-username
