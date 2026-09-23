@@ -30,7 +30,7 @@ export default function App() {
 
   return (
     <div style={{ fontFamily: "sans-serif", maxWidth: 960, margin: "0 auto", padding: 24 }}>
-      <h1>Giám sát &amp; Dự báo Chất lượng Không khí</h1>
+      <h1>Giám sát &amp; Dự báo Chất lượng Không khí </h1>
 
       {error && <p style={{ color: "red" }}>Lỗi: {error} (backend đã chạy chưa?)</p>}
 

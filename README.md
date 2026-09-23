@@ -105,11 +105,11 @@ cần chờ module khác xong hẳn.
 
 ### Việc cần làm
 
-- [ ] Thống nhất field & đơn vị: `pm25`, `pm10` (µg/m³), `co2` (ppm), `temperature` (°C), `humidity` (%)
-- [ ] Thống nhất định dạng thời gian: ISO-8601, múi giờ thống nhất
-- [ ] Thống nhất topic MQTT: `sensors/<device_id>/data`
-- [ ] Thống nhất danh sách endpoint REST: `/api/readings`, `/api/readings/latest`, `/api/forecasts`, `/api/alerts/config`, `/ws/live`
-- [ ] Ghi lại toàn bộ vào `iot/mqtt_data_contract.md`
+- [x] Thống nhất field & đơn vị: `pm25`, `pm10` (µg/m³), `co2` (ppm), `temperature` (°C), `humidity` (%)
+- [x] Thống nhất định dạng thời gian: ISO-8601, múi giờ thống nhất
+- [x] Thống nhất topic MQTT: `sensors/<device_id>/data`
+- [x] Thống nhất danh sách endpoint REST: `/api/readings`, `/api/readings/latest`, `/api/forecasts`, `/api/alerts/config`, `/ws/live`
+- [x] Ghi lại toàn bộ vào `iot/mqtt_data_contract.md`
 
 ```text
 size/nồng độ → µg/m³ hoặc ppm (ghi rõ theo từng field)
@@ -119,8 +119,8 @@ device_id     → dạng "node-XX"
 
 ### Kiểm tra
 
-- [ ] Cả 4 người giải thích giống nhau khi hỏi cùng một field
-- [ ] Không có module nào tự đặt field mới ngoài contract
+- [x] Cả 4 người giải thích giống nhau khi hỏi cùng một field
+- [x] Không có module nào tự đặt field mới ngoài contract
 
 ---
 
@@ -128,10 +128,10 @@ device_id     → dạng "node-XX"
 
 ### Việc cần làm
 
-- [ ] Tạo Git repository chung
+- [x] Tạo Git repository chung
 - [ ] Tạo branch `develop`
 - [ ] Tạo branch riêng: `feature/iot`, `feature/backend`, `feature/ai`, `feature/web`
-- [ ] Tạo khung thư mục theo mục 2
+- [x] Tạo khung thư mục theo mục 2
 
 ### Kiểm tra
 
@@ -193,7 +193,7 @@ docker-compose.yml
 
 ### Việc cần làm
 
-- [ ] Viết `docker-compose.yml` gồm Mosquitto, InfluxDB, PostgreSQL
+- [x] Viết `docker-compose.yml` gồm Mosquitto, InfluxDB, PostgreSQL
 - [ ] Chạy `docker compose up -d`, kiểm tra 3 service đều "healthy"
 - [ ] Test publish/subscribe thử bằng `mosquitto_pub`/`mosquitto_sub`
 
@@ -214,8 +214,8 @@ database/init_postgres.sql
 
 ### Việc cần làm
 
-- [ ] Tạo bảng `devices`, `alert_configs`, `forecast_runs`, `forecast_points`
-- [ ] Insert dữ liệu mẫu cho 1 node test (`node-01`)
+- [x] Tạo bảng `devices`, `alert_configs`, `forecast_runs`, `forecast_points`
+- [x] Insert dữ liệu mẫu cho 1 node test (`node-01`)
 
 ### Kiểm tra
 
@@ -236,14 +236,14 @@ ai/data/mock_readings.csv   (mới tạo)
 
 ### Việc cần làm
 
-- [ ] Viết script sinh dữ liệu PM2.5/PM10/CO2/nhiệt độ/độ ẩm giả lập theo giờ, trong 30 ngày
-- [ ] Đảm bảo dữ liệu có dao động ngày/đêm hợp lý (không phẳng)
-- [ ] Lưu thành CSV đúng cột theo data contract
+- [x] Viết script sinh dữ liệu PM2.5/PM10/CO2/nhiệt độ/độ ẩm giả lập theo giờ, trong 30 ngày
+- [x] Đảm bảo dữ liệu có dao động ngày/đêm hợp lý (không phẳng)
+- [x] Lưu thành CSV đúng cột theo data contract
 
 ### Kiểm tra
 
-- [ ] File CSV có đủ cột: `timestamp, pm25, pm10, co2, temperature, humidity`
-- [ ] Không có giá trị âm bất hợp lý
+- [x] File CSV có đủ cột: `timestamp, pm25, pm10, co2, temperature, humidity`
+- [x] Không có giá trị âm bất hợp lý
 
 ---
 
@@ -274,13 +274,13 @@ ai/requirements.txt
 
 ### Việc cần làm
 
-- [ ] Phác thảo màn hình chính: AQI hiện tại, PM2.5, trạng thái, biểu đồ xu hướng
-- [ ] Phác thảo khu vực cấu hình ngưỡng cảnh báo
-- [ ] Thống nhất bảng màu & font chữ cơ bản
+- [x] Phác thảo màn hình chính: AQI hiện tại, PM2.5, trạng thái, biểu đồ xu hướng
+- [x] Phác thảo khu vực cấu hình ngưỡng cảnh báo
+- [x] Thống nhất bảng màu & font chữ cơ bản
 
 ### Kiểm tra
 
-- [ ] Cả nhóm xem và đồng ý wireframe trước khi code
+- [x] Cả nhóm xem và đồng ý wireframe trước khi code
 - [ ] Wireframe thể hiện đủ các phần dữ liệu backend sẽ cung cấp (theo data contract)
 
 ---
@@ -298,14 +298,14 @@ frontend/src/App.jsx
 
 ### Việc cần làm
 
-- [ ] Khởi tạo project Vite + React
-- [ ] Cài `recharts`
-- [ ] Chạy `npm run dev`, hiển thị trang "Hello PBL4" cơ bản
+- [x] Khởi tạo project Vite + React
+- [x] Cài `recharts`
+- [x] Chạy `npm run dev`, hiển thị trang "Hello PBL4" cơ bản
 
 ### Kiểm tra
 
-- [ ] Trang chạy tại `http://localhost:5173` không lỗi console
-- [ ] Hot reload hoạt động khi sửa `App.jsx`
+- [x] Trang chạy tại `http://localhost:5173` không lỗi console
+- [x] Hot reload hoạt động khi sửa `App.jsx`
 
 ---
 
