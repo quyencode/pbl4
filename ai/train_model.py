@@ -53,6 +53,17 @@ def persistence_baseline(X_test: np.ndarray, horizon: int, target_idx: int) -> n
     return np.repeat(last_values[:, None], horizon, axis=1)
 
 
+def inverse_target(scaler, arr_scaled: np.ndarray, target_idx: int, n_features: int) -> np.ndarray:
+    """Giải chuẩn hoá mảng (n_samples, horizon) đã scale 0-1 về lại đơn vị thật (µg/m³),
+    để MAE/RMSE/MAPE có ý nghĩa vật lý thay vì tính trên thang 0-1."""
+    n_samples, horizon = arr_scaled.shape
+    flat = arr_scaled.reshape(-1)
+    dummy = np.zeros((len(flat), n_features))
+    dummy[:, target_idx] = flat
+    real = scaler.inverse_transform(dummy)[:, target_idx]
+    return real.reshape(n_samples, horizon)
+
+
 def main(data_path: str, window_size: int, horizon: int, epochs: int, model_type: str):
     df = pd.read_csv(data_path, parse_dates=["timestamp"])
     splits, scaler = prepare_dataset(df, window_size=window_size, horizon=horizon)
@@ -73,11 +84,16 @@ def main(data_path: str, window_size: int, horizon: int, epochs: int, model_type
         epochs=epochs, batch_size=32, callbacks=[early_stop], verbose=1,
     )
 
-    y_pred = model.predict(splits["X_test"])
-    metrics_model = evaluate(splits["y_test"], y_pred)
+    y_pred_scaled = model.predict(splits["X_test"])
+    y_baseline_scaled = persistence_baseline(splits["X_test"], horizon, target_idx)
 
-    y_baseline = persistence_baseline(splits["X_test"], horizon, target_idx)
-    metrics_baseline = evaluate(splits["y_test"], y_baseline)
+    # Giải chuẩn hoá về đơn vị thật (µg/m³) trước khi tính chỉ số đánh giá
+    y_test_real = inverse_target(scaler, splits["y_test"], target_idx, n_features)
+    y_pred_real = inverse_target(scaler, y_pred_scaled, target_idx, n_features)
+    y_baseline_real = inverse_target(scaler, y_baseline_scaled, target_idx, n_features)
+
+    metrics_model = evaluate(y_test_real, y_pred_real)
+    metrics_baseline = evaluate(y_test_real, y_baseline_real)
 
     print("\n=== Kết quả đánh giá trên tập Test ===")
     print(f"{model_type}:  ", metrics_model)
