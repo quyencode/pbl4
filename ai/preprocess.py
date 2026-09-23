@@ -21,7 +21,7 @@ def clean_data(df: pd.DataFrame) -> pd.DataFrame:
 def resample_hourly(df: pd.DataFrame) -> pd.DataFrame:
     """Đưa dữ liệu về tần suất 1 giờ/điểm (trung bình) để đồng bộ nhịp dự báo."""
     df = df.set_index("timestamp")
-    hourly = df[FEATURE_COLUMNS].resample("1H").mean()
+    hourly = df[FEATURE_COLUMNS].resample("1h").mean()
     hourly = hourly.interpolate(limit_direction="both")
     return hourly.reset_index()
 
