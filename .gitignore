@@ -16,6 +16,7 @@ dist/
 ai/model/*.h5
 ai/model/*.keras
 ai/data/*.csv
+!ai/data/mock_readings.csv
 
 # Docker volumes (local dev)
 mosquitto/data/
