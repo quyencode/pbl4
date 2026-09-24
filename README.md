@@ -257,14 +257,14 @@ ai/requirements.txt
 
 ### Việc cần làm
 
-- [ ] Tạo virtualenv riêng cho `ai/`
-- [ ] Cài `pandas`, `numpy`, `scikit-learn`, `tensorflow`, `matplotlib`
-- [ ] Test import toàn bộ thư viện không lỗi
+- [x] Tạo virtualenv riêng cho `ai/`
+- [x] Cài `pandas`, `numpy`, `scikit-learn`, `tensorflow`, `matplotlib`
+- [x] Test import toàn bộ thư viện không lỗi
 
 ### Kiểm tra
 
-- [ ] `python -c "import tensorflow"` chạy không lỗi
-- [ ] `pip freeze` khớp với `requirements.txt`
+- [x] `python -c "import tensorflow"` chạy không lỗi
+- [x] `pip freeze` khớp với `requirements.txt`
 
 ---
 
