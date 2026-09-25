@@ -26,3 +26,4 @@ mosquitto/log/
 .DS_Store
 .vscode/
 *.log
+docs/progress_screenshots/

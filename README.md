@@ -152,7 +152,7 @@ iot/esp32_sensor_node/wiring_diagram.md   (mới tạo)
 
 ### Việc cần làm
 
-- [x] Đọc datasheet PMS5003 (PM2.5/PM10), MH-Z19B (CO2), DHT22 (nhiệt độ/độ ẩm)
+- [x] Đọc datasheet PMS5003 (PM2.5/PM10), MH-Z19B (CO2), DHT11 (nhiệt độ/độ ẩm)
 - [x] Xác định chân UART/I2C nối với ESP32
 - [x] Vẽ sơ đồ đấu nối (tay hoặc Fritzing)
 - [x] Lập danh sách linh kiện cần mua/mượn
@@ -379,7 +379,7 @@ dht.readTemperature() / dht.readHumidity()
 
 - [ ] Đọc riêng PMS5003, in giá trị PM2.5/PM10 ra Serial
 - [ ] Đọc riêng MH-Z19B, in giá trị CO2 ra Serial
-- [ ] Đọc riêng DHT22, in nhiệt độ/độ ẩm ra Serial
+- [ ] Đọc riêng DHT11, in nhiệt độ/độ ẩm ra Serial
 
 ### Kiểm tra
 
@@ -509,13 +509,13 @@ frontend/src/App.jsx
 
 ### Việc cần làm
 
-- [ ] Dựng `StatCard` (AQI hiện tại, PM2.5, Trạng thái)
-- [ ] Dựng khung vị trí cho 2 biểu đồ (lịch sử + dự báo)
+- [x] Dựng `StatCard` (AQI hiện tại, PM2.5, Trạng thái)
+- [x] Dựng khung vị trí cho 2 biểu đồ (lịch sử + dự báo)
 
 ### Kiểm tra
 
-- [ ] Layout không vỡ khi thu nhỏ cửa sổ trình duyệt
-- [ ] `StatCard` hiển thị đúng khi giá trị là `null`/`—`
+- [x] Layout không vỡ khi thu nhỏ cửa sổ trình duyệt
+- [x] `StatCard` hiển thị đúng khi giá trị là `null`/`—`
 
 ---
 
@@ -529,13 +529,13 @@ frontend/src/api.js
 
 ### Việc cần làm
 
-- [ ] Viết hàm `getLatestReadings()`, `getReadingsHistory()`
-- [ ] Trỏ tạm tới dữ liệu giả lập (JSON tĩnh) khi backend chưa sẵn sàng
+- [x] Viết hàm `getLatestReadings()`, `getReadingsHistory()`
+- [x] Trỏ tạm tới dữ liệu giả lập (JSON tĩnh) khi backend chưa sẵn sàng
 
 ### Kiểm tra
 
-- [ ] Dashboard hiển thị được dữ liệu giả lập không lỗi console
-- [ ] Chuyển sang API thật chỉ cần đổi `API_BASE_URL`, không sửa logic hiển thị
+- [x] Dashboard hiển thị được dữ liệu giả lập không lỗi console
+- [x] Chuyển sang API thật chỉ cần đổi `API_BASE_URL`, không sửa logic hiển thị
 
 ---
 

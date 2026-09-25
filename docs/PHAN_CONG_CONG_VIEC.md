@@ -56,7 +56,7 @@ Bốn thành viên phụ trách bốn khối chính, ghép nối với nhau qua 
 
 | Việc cần làm | Deliverable | Công cụ/công nghệ |
 |---|---|---|
-| Nghiên cứu datasheet & đấu nối cảm biến PMS5003 (PM2.5/PM10), MH-Z19B (CO2), DHT22/SHT31 (nhiệt độ, độ ẩm) với ESP32 | Sơ đồ đấu nối (wiring diagram) | ESP32, UART/I2C |
+| Nghiên cứu datasheet & đấu nối cảm biến PMS5003 (PM2.5/PM10), MH-Z19B (CO2), DHT11/SHT31 (nhiệt độ, độ ẩm) với ESP32 | Sơ đồ đấu nối (wiring diagram) | ESP32, UART/I2C |
 | Viết firmware đọc dữ liệu cảm biến theo chu kỳ cố định (30–60s) | `esp32_sensor_node.ino` | Arduino IDE / PlatformIO |
 | Đóng gói dữ liệu thành JSON theo đúng data contract (mục 5.1) và publish qua MQTT | Code publish MQTT (topic `sensors/node-XX/data`) | PubSubClient / MQTT.js |
 | Cài cơ chế đệm cục bộ (local buffer) khi mất kết nối, gửi bù khi mạng phục hồi | Module buffer trong firmware | Vòng đệm SPIFFS/RAM |

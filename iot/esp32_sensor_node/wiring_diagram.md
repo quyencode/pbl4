@@ -11,7 +11,7 @@
 |---|---|---|---|
 | PMS5003 (PM2.5/PM10) | VCC → 5V, GND → GND | TX → RX2, RX → TX2 | GPIO16 (RX2), GPIO17 (TX2) |
 | MH-Z19B (CO2) | VIN → 5V, GND → GND | TX → RX, RX → TX | GPIO25, GPIO26 |
-| DHT22 (nhiệt độ/độ ẩm) | VCC → 3.3V, GND → GND | DATA → GPIO4 | GPIO4 (kèm điện trở kéo lên 10kΩ) |
+| DHT11 (nhiệt độ/độ ẩm) | VCC → 3.3V, GND → GND | DATA → GPIO4 | GPIO4 (kèm điện trở kéo lên 10kΩ) |
 
 Các chân này khớp đúng với đoạn code sau trong `esp32_sensor_node.ino`, **không cần sửa code** nếu đấu đúng bảng trên:
 
@@ -33,7 +33,7 @@ CO2Serial.begin(9600, SERIAL_8N1, 25, 26);   // RX=25, TX=26
 - Cấp nguồn 5V — module cần dòng ổn định khi làm nóng bộ cảm biến NDIR lúc mới khởi động (2-3 phút đầu số đo chưa chuẩn, là bình thường)
 - Đấu chéo tương tự: TX của MH-Z19B → GPIO25 (RX), RX của MH-Z19B → GPIO26 (TX)
 
-### DHT22 (nhiệt độ, độ ẩm)
+### DHT11 (nhiệt độ, độ ẩm)
 - Chỉ có 1 chân dữ liệu (1-Wire), nối vào GPIO4
 - **Bắt buộc thêm điện trở kéo lên (pull-up) 10kΩ** giữa chân DATA và chân VCC — nếu module bạn mua là dạng breakout board (3 chân, đã tích hợp sẵn điện trở) thì bỏ qua bước này
 - Có thể cấp nguồn 3.3V hoặc 5V đều được, ưu tiên 3.3V để đồng bộ mức logic
