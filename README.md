@@ -152,15 +152,15 @@ iot/esp32_sensor_node/wiring_diagram.md   (mới tạo)
 
 ### Việc cần làm
 
-- [ ] Đọc datasheet PMS5003 (PM2.5/PM10), MH-Z19B (CO2), DHT11nn n (nhiệt độ/độ ẩm)
-- [ ] Xác định chân UART/I2C nối với ESP32
-- [ ] Vẽ sơ đồ đấu nối (tay hoặc Fritzing)
-- [ ] Lập danh sách linh kiện cần mua/mượn
+- [x] Đọc datasheet PMS5003 (PM2.5/PM10), MH-Z19B (CO2), DHT11 (nhiệt độ/độ ẩm)
+- [x] Xác định chân UART/I2C nối với ESP32
+- [x] Vẽ sơ đồ đấu nối (tay hoặc Fritzing)
+- [x] Lập danh sách linh kiện cần mua/mượn
 
 ### Kiểm tra
 
-- [ ] Sơ đồ không trùng chân giữa các cảm biến
-- [ ] Bình và Quyến đọc hiểu được sơ đồ mà không cần hỏi lại
+- [x] Sơ đồ không trùng chân giữa các cảm biến
+- [x] Bình và Quyến đọc hiểu được sơ đồ mà không cần hỏi lại
 
 ---
 
@@ -168,9 +168,9 @@ iot/esp32_sensor_node/wiring_diagram.md   (mới tạo)
 
 ### Việc cần làm
 
-- [ ] Cài Arduino IDE hoặc PlatformIO
-- [ ] Cài thư viện `PubSubClient`, `ArduinoJson`, `DHT sensor library`
-- [ ] Nạp thử chương trình Blink lên board ESP32
+- [x] Cài Arduino IDE hoặc PlatformIO
+- [x] Cài thư viện `PubSubClient`, `ArduinoJson`, `DHT sensor library`
+- [x] Nạp thử chương trình Blink lên board ESP32
 - [ ] Test kết nối Wi-Fi cơ bản (in IP ra Serial Monitor)
 
 ### Kiểm tra
