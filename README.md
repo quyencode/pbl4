@@ -317,9 +317,9 @@ frontend/src/App.jsx
 - [ ] Board kết nối Wi-Fi thành công
 
 ## Bình
-- [ ] Docker compose chạy đủ 3 service
+- [x] Docker compose chạy đủ 3 service
 - [ ] Schema PostgreSQL khởi tạo thành công
-- [ ] Test MQTT pub/sub thủ công thành công
+- [x] Test MQTT pub/sub thủ công thành công
 
 ## Lợi
 - [ ] Có dữ liệu mock hợp lệ (30 ngày)
