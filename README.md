@@ -135,8 +135,8 @@ device_id     → dạng "node-XX"
 
 ### Kiểm tra
 
-- [ ] Cả 4 người clone và build/run được project rỗng
-- [ ] `.gitignore` chặn đúng `.env`, `node_modules/`, `__pycache__/`, `*.h5/.keras`
+- [x] Cả 4 người clone và build/run được project rỗng
+- [x] `.gitignore` chặn đúng `.env`, `node_modules/`, `__pycache__/`, `*.h5/.keras`
 
 ---
 
@@ -159,7 +159,7 @@ iot/esp32_sensor_node/wiring_diagram.md   (mới tạo)
 
 ### Kiểm tra
 
-- [ ] Sơ đồ không trùng chân giữa các cảm biến
+- [x] Sơ đồ không trùng chân giữa các cảm biến
 - [x] Bình và Quyến đọc hiểu được sơ đồ mà không cần hỏi lại
 
 ---
@@ -194,13 +194,13 @@ docker-compose.yml
 ### Việc cần làm
 
 - [x] Viết `docker-compose.yml` gồm Mosquitto, InfluxDB, PostgreSQL
-- [ ] Chạy `docker compose up -d`, kiểm tra 3 service đều "healthy"
-- [ ] Test publish/subscribe thử bằng `mosquitto_pub`/`mosquitto_sub`
+- [x] Chạy `docker compose up -d`, kiểm tra 3 service đều "healthy"
+- [x] Test publish/subscribe thử bằng `mosquitto_pub`/`mosquitto_sub`
 
 ### Kiểm tra
 
-- [ ] `docker ps` hiển thị đủ 3 container đang chạy
-- [ ] Gửi 1 message MQTT test và subscribe nhận lại được
+- [x] `docker ps` hiển thị đủ 3 container đang chạy
+- [x] Gửi 1 message MQTT test và subscribe nhận lại được
 
 ---
 
@@ -219,8 +219,8 @@ database/init_postgres.sql
 
 ### Kiểm tra
 
-- [ ] Schema chạy không lỗi khi PostgreSQL khởi tạo (`docker-entrypoint-initdb.d`)
-- [ ] Query `SELECT * FROM devices;` trả về đúng dữ liệu mẫu
+- [x] Schema chạy không lỗi khi PostgreSQL khởi tạo (`docker-entrypoint-initdb.d`)
+- [x] Query `SELECT * FROM devices;` trả về đúng dữ liệu mẫu
 
 ---
 
