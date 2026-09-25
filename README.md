@@ -152,7 +152,7 @@ iot/esp32_sensor_node/wiring_diagram.md   (mới tạo)
 
 ### Việc cần làm
 
-- [ ] Đọc datasheet PMS5003 (PM2.5/PM10), MH-Z19B (CO2), DHT22 (nhiệt độ/độ ẩm)
+- [ ] Đọc datasheet PMS5003 (PM2.5/PM10), MH-Z19B (CO2), DHT11nn n (nhiệt độ/độ ẩm)
 - [ ] Xác định chân UART/I2C nối với ESP32
 - [ ] Vẽ sơ đồ đấu nối (tay hoặc Fritzing)
 - [ ] Lập danh sách linh kiện cần mua/mượn
@@ -379,7 +379,7 @@ dht.readTemperature() / dht.readHumidity()
 
 - [ ] Đọc riêng PMS5003, in giá trị PM2.5/PM10 ra Serial
 - [ ] Đọc riêng MH-Z19B, in giá trị CO2 ra Serial
-- [ ] Đọc riêng DHT22, in nhiệt độ/độ ẩm ra Serial
+- [ ] Đọc riêng DHT11, in nhiệt độ/độ ẩm ra Serial
 
 ### Kiểm tra
 
