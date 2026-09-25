@@ -509,13 +509,13 @@ frontend/src/App.jsx
 
 ### Việc cần làm
 
-- [ ] Dựng `StatCard` (AQI hiện tại, PM2.5, Trạng thái)
-- [ ] Dựng khung vị trí cho 2 biểu đồ (lịch sử + dự báo)
+- [x] Dựng `StatCard` (AQI hiện tại, PM2.5, Trạng thái)
+- [x] Dựng khung vị trí cho 2 biểu đồ (lịch sử + dự báo)
 
 ### Kiểm tra
 
-- [ ] Layout không vỡ khi thu nhỏ cửa sổ trình duyệt
-- [ ] `StatCard` hiển thị đúng khi giá trị là `null`/`—`
+- [x] Layout không vỡ khi thu nhỏ cửa sổ trình duyệt
+- [x] `StatCard` hiển thị đúng khi giá trị là `null`/`—`
 
 ---
 
@@ -529,13 +529,13 @@ frontend/src/api.js
 
 ### Việc cần làm
 
-- [ ] Viết hàm `getLatestReadings()`, `getReadingsHistory()`
-- [ ] Trỏ tạm tới dữ liệu giả lập (JSON tĩnh) khi backend chưa sẵn sàng
+- [x] Viết hàm `getLatestReadings()`, `getReadingsHistory()`
+- [x] Trỏ tạm tới dữ liệu giả lập (JSON tĩnh) khi backend chưa sẵn sàng
 
 ### Kiểm tra
 
-- [ ] Dashboard hiển thị được dữ liệu giả lập không lỗi console
-- [ ] Chuyển sang API thật chỉ cần đổi `API_BASE_URL`, không sửa logic hiển thị
+- [x] Dashboard hiển thị được dữ liệu giả lập không lỗi console
+- [x] Chuyển sang API thật chỉ cần đổi `API_BASE_URL`, không sửa logic hiển thị
 
 ---
 
