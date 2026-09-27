@@ -1,5 +1,10 @@
 import numpy as np
 import pandas as pd
+import sys
+import os
+# Thêm thư mục gốc 'ai' hoặc t
+# hư mục chứa preprocess vào đường dẫn hệ thống
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../')))
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import LSTM, Dense
 from preprocess import load_and_preprocess_data
