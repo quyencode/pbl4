@@ -175,8 +175,8 @@ iot/esp32_sensor_node/wiring_diagram.md   (mới tạo)
 
 ### Kiểm tra
 
-- [ ] Board nhận code, không lỗi upload
-- [ ] Serial Monitor in đúng IP sau khi kết nối Wi-Fi
+- [x] Board nhận code, không lỗi upload
+- [x] Serial Monitor in đúng IP sau khi kết nối Wi-Fi
 
 ---
 
@@ -377,9 +377,9 @@ dht.readTemperature() / dht.readHumidity()
 
 ### Việc cần làm
 
-- [ ] Đọc riêng PMS5003, in giá trị PM2.5/PM10 ra Serial
-- [ ] Đọc riêng MH-Z19B, in giá trị CO2 ra Serial
-- [ ] Đọc riêng DHT22, in nhiệt độ/độ ẩm ra Serial
+- [x] Đọc riêng PMS5003, in giá trị PM2.5/PM10 ra Serial
+- [x] Đọc riêng MH-Z19B, in giá trị CO2 ra Serial
+- [x] Đọc riêng DHT22, in nhiệt độ/độ ẩm ra Serial
 
 ### Kiểm tra
 
@@ -398,12 +398,12 @@ buildPayload()
 
 ### Việc cần làm
 
-- [ ] Gộp 5 giá trị cảm biến + `device_id` + `timestamp` vào 1 JSON
-- [ ] Xử lý trường hợp cảm biến lỗi → gửi `null` thay vì crash
+- [x] Gộp 5 giá trị cảm biến + `device_id` + `timestamp` vào 1 JSON
+- [x] Xử lý trường hợp cảm biến lỗi → gửi `null` thay vì crash
 
 ### Kiểm tra
 
-- [ ] `Serial.println(buildPayload())` in ra đúng format JSON như trong `mqtt_data_contract.md`
+- [x] `Serial.println(buildPayload())` in ra đúng format JSON như trong `mqtt_data_contract.md`
 - [ ] JSON parse ngược lại được (dán vào jsonlint không lỗi)
 
 ---
