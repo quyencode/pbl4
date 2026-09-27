@@ -473,13 +473,13 @@ resample_hourly()
 
 ### Việc cần làm
 
-- [ ] `clean_data()`: loại bản ghi thiếu target, nội suy các cột số
-- [ ] `resample_hourly()`: đưa dữ liệu về tần suất 1 giờ/điểm
+- [x] `clean_data()`: loại bản ghi thiếu target, nội suy các cột số
+- [x] `resample_hourly()`: đưa dữ liệu về tần suất 1 giờ/điểm
 
 ### Kiểm tra
 
-- [ ] Chạy trên `ai/data/mock_readings.csv` không lỗi
-- [ ] Số dòng sau `resample_hourly()` đúng bằng số giờ trong khoảng dữ liệu
+- [x] Chạy trên `ai/data/mock_readings.csv` không lỗi
+- [x] Số dòng sau `resample_hourly()` đúng bằng số giờ trong khoảng dữ liệu
 
 ---
 
@@ -487,13 +487,13 @@ resample_hourly()
 
 ### Việc cần làm
 
-- [ ] Chạy toàn bộ `clean_data → resample_hourly` trên dữ liệu mock
-- [ ] In thử `head()`/`describe()` để kiểm tra hợp lý
+- [x] Chạy toàn bộ `clean_data → resample_hourly` trên dữ liệu mock
+- [x] In thử `head()`/`describe()` để kiểm tra hợp lý
 
 ### Kiểm tra
 
-- [ ] Không còn giá trị `NaN` sau bước tiền xử lý
-- [ ] Thống kê mô tả (min/max/mean) hợp lý với dữ liệu mock đã tạo
+- [x] Không còn giá trị `NaN` sau bước tiền xử lý
+- [x] Thống kê mô tả (min/max/mean) hợp lý với dữ liệu mock đã tạo
 
 ---
 
