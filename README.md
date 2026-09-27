@@ -414,13 +414,13 @@ buildPayload()
 
 ### Việc cần làm
 
-- [ ] Subscribe topic `sensors/+/data` bằng `mosquitto_sub`
-- [ ] Nhận thử message publish thủ công đúng format contract
+- [x] Subscribe topic `sensors/+/data` bằng `mosquitto_sub`
+- [x] Nhận thử message publish thủ công đúng format contract
 
 ### Kiểm tra
 
-- [ ] Message nhận được khớp 100% với data contract
-- [ ] Topic wildcard `+` hoạt động đúng với nhiều `device_id`
+- [x] Message nhận được khớp 100% với data contract
+- [x] Topic wildcard `+` hoạt động đúng với nhiều `device_id`
 
 ---
 
@@ -443,14 +443,14 @@ write_to_influx()
 
 ### Việc cần làm
 
-- [ ] Kết nối MQTT broker, subscribe đúng topic
-- [ ] Parse JSON, validate tối thiểu (`device_id` bắt buộc)
-- [ ] Ghi thử 1 điểm dữ liệu vào InfluxDB
+- [x] Kết nối MQTT broker, subscribe đúng topic
+- [x] Parse JSON, validate tối thiểu (`device_id` bắt buộc)
+- [x] Ghi thử 1 điểm dữ liệu vào InfluxDB
 
 ### Kiểm tra
 
-- [ ] Ghi thành công 1 record, xem lại được trên InfluxDB UI
-- [ ] Payload sai định dạng bị log cảnh báo, không làm crash service
+- [x] Ghi thành công 1 record, xem lại được trên InfluxDB UI
+- [x] Payload sai định dạng bị log cảnh báo, không làm crash service
 
 ---
 
