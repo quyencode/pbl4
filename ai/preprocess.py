@@ -4,11 +4,11 @@ from sklearn.preprocessing import MinMaxScaler
 
 def clean_data(df):
     """
-    Task C2.1: Loại bỏ bản ghi thiếu giá trị mục tiêu (target/PM2.5 hoặc AQI), 
+    Task C2.1: Loại bỏ bản ghi thiếu giá trị mục tiêu (target/pm25 hoặc AQI), 
     nội suy các cột số còn thiếu.
     """
-    # Giả sử cột mục tiêu cần dự báo là 'PM2.5' hoặc 'AQI'
-    target_col = 'PM2.5' if 'PM2.5' in df.columns else df.columns[-1]
+    # Giả sử cột mục tiêu cần dự báo là 'pm25' hoặc 'AQI'
+    target_col = 'pm25' if 'pm25' in df.columns else df.columns[-1]
     
     # 1. Loại bỏ các dòng bị thiếu giá trị target
     df = df.dropna(subset=[target_col])
@@ -51,8 +51,8 @@ def load_and_preprocess_data(file_path):
     # Bước 2: Resample về tần suất 1 giờ
     df_resampled = resample_hourly(df_cleaned)
     
-    # Lấy cột giá trị để huấn luyện (ví dụ: cột PM2.5 hoặc cột số đầu tiên)
-    target_col = 'PM2.5' if 'PM2.5' in df_resampled.columns else df_resampled.select_dtypes(include=[np.number]).columns[0]
+    # Lấy cột giá trị để huấn luyện (ví dụ: cột pm25 hoặc cột số đầu tiên)
+    target_col = 'pm25' if 'pm25' in df_resampled.columns else df_resampled.select_dtypes(include=[np.number]).columns[0]
     data = df_resampled[[target_col]].values
     
     # Bước 3: Chuẩn hóa dữ liệu về khoảng [0, 1] cho LSTM
