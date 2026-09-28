@@ -1,13 +1,14 @@
 /*
   PBL4 - Node cảm biến chất lượng không khí (ESP32)
-  Đọc: PM2.5/PM10 (PMS5003), CO2 (MH-Z19B), nhiệt độ/độ ẩm (DHT22)
+  Đọc thật: nhiệt độ/độ ẩm (DHT11)
+  Mô phỏng (không dùng cảm biến thật do giới hạn ngân sách): PM2.5/PM10, CO2
+    - Xem lý do & giới hạn trong iot/mqtt_data_contract.md và báo cáo, mục "Giới hạn đề tài"
   Gửi dữ liệu qua MQTT theo định dạng trong iot/mqtt_data_contract.md
 
   Thư viện cần cài (Arduino IDE > Library Manager):
     - PubSubClient      (MQTT)
     - ArduinoJson        (đóng gói JSON)
     - DHT sensor library (Adafruit)
-    - SoftwareSerial hoặc HardwareSerial cho PMS5003 / MH-Z19B
 
   Đây là bộ khung (skeleton) - cần chỉnh sửa theo linh kiện & chân cắm thực tế.
 */
@@ -28,12 +29,8 @@ const int   SEND_INTERVAL_MS = 300000; // gửi lên server mỗi 5 phút
 
 // ====== CHÂN CẮM - CHỈNH THEO SƠ ĐỒ ĐẤU NỐI THỰC TẾ ======
 #define DHTPIN   4
-#define DHTTYPE  DHT22
+#define DHTTYPE  DHT11
 DHT dht(DHTPIN, DHTTYPE);
-
-// PMS5003 và MH-Z19B dùng UART - khai báo Serial2 (RX=16, TX=17) làm ví dụ
-HardwareSerial PMSSerial(1);
-HardwareSerial CO2Serial(2);
 
 WiFiClient espClient;
 PubSubClient mqttClient(espClient);
@@ -49,10 +46,14 @@ int bufferCount = 0;
 unsigned long lastReadTime = 0;
 unsigned long lastSendTime = 0;
 
-// Giá trị đọc gần nhất
+// Giá trị đọc/mô phỏng gần nhất
 float latestPM25 = NAN, latestPM10 = NAN;
 int   latestCO2  = -1;
 float latestTemp = NAN, latestHumidity = NAN;
+
+// Giá trị nền dùng để random-walk cho dữ liệu mô phỏng (giữ trạng thái giữa các lần đọc)
+float mockPM25Baseline = 25.0;  // µg/m3, điển hình đô thị VN
+float mockCO2Baseline  = 420.0; // ppm, mức nền ngoài trời
 
 void setupWiFi() {
   WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
@@ -77,18 +78,33 @@ void reconnectMQTT() {
   }
 }
 
-// TODO: thay bằng code đọc thật theo protocol của PMS5003 (UART, 32-byte frame)
+// ====== MÔ PHỎNG PM2.5/PM10 (KHÔNG dùng cảm biến PMS5003 thật) ======
+// Lý do: cắt giảm ngân sách đề tài - xem "Giới hạn đề tài" trong báo cáo.
+// Thuật toán: random walk quanh 1 giá trị nền + thỉnh thoảng có "đợt tăng đột biến"
+// để dữ liệu có hình dạng gần giống thật, thay vì random thuần (dễ làm hỏng việc train AI).
+// Giữ nguyên tên hàm readPMS5003() để không phải sửa readAllSensors() hay các tài liệu khác.
 bool readPMS5003(float &pm25, float &pm10) {
-  // Khung sườn - cần cài đặt đọc & parse frame thật từ PMSSerial
-  // Tham khảo datasheet PMS5003: mở đầu 0x42 0x4D, checksum cuối frame
-  return false; // trả về true khi đọc thành công
+  mockPM25Baseline += random(-30, 31) / 10.0;                  // bước đi ngẫu nhiên nhỏ (~-3.0 .. +3.0)
+  if (random(0, 1000) < 5) mockPM25Baseline += random(15, 40); // ~0.5%/lần đọc: đợt tăng đột biến (giả lập ô nhiễm)
+  mockPM25Baseline = constrain(mockPM25Baseline, 5.0, 150.0);
+
+  pm25 = mockPM25Baseline;
+  pm10 = mockPM25Baseline * (1.3 + random(0, 50) / 100.0);     // PM10 luôn >= PM2.5 (hệ số 1.3-1.8)
+  return true; // luôn thành công vì là dữ liệu mô phỏng, không phụ thuộc phần cứng
 }
 
-// TODO: thay bằng code đọc thật theo protocol UART của MH-Z19B
+// ====== MÔ PHỎNG CO2 (KHÔNG dùng cảm biến MH-Z19B thật) ======
+// Cùng lý do và thuật toán như trên, có thêm dao động nhẹ theo giờ trong ngày
+// (giả lập CO2 tăng vào ban ngày do hoạt động/giao thông).
 bool readMHZ19B(int &co2ppm) {
-  // Gửi lệnh đọc 0xFF 0x01 0x86 0x00 0x00 0x00 0x00 0x00 0x79 tới CO2Serial
-  // rồi đọc 9 byte phản hồi và tính CO2 = byte[2]*256 + byte[3]
-  return false;
+  float hourOfDay = millis() / 3600000.0;
+  float dayCycle = sin(hourOfDay * 2 * PI / 24.0) * 40;
+  mockCO2Baseline += random(-20, 21) + dayCycle * 0.05;
+  if (random(0, 1000) < 5) mockCO2Baseline += random(150, 400); // đợt tăng đột biến
+  mockCO2Baseline = constrain(mockCO2Baseline, 380.0, 2000.0);
+
+  co2ppm = (int)mockCO2Baseline;
+  return true;
 }
 
 void readAllSensors() {
@@ -108,16 +124,16 @@ void readAllSensors() {
   if (!isnan(t)) latestTemp = t;
   if (!isnan(h)) latestHumidity = h;
 
-  Serial.printf("PM2.5=%.1f PM10=%.1f CO2=%d T=%.1f H=%.1f\n",
+  Serial.printf("PM2.5=%.1f PM10=%.1f CO2=%d T=%.1f H=%.1f (PM/CO2 la du lieu mo phong)\n",
                 latestPM25, latestPM10, latestCO2, latestTemp, latestHumidity);
 }
 
 String buildPayload() {
   StaticJsonDocument<256> doc;
   doc["device_id"] = DEVICE_ID;
-  doc["pm25"] = isnan(latestPM25) ? nullptr : latestPM25;
-  doc["pm10"] = isnan(latestPM10) ? nullptr : latestPM10;
-  doc["co2"] = latestCO2;
+  doc["pm25"] = isnan(latestPM25) ? nullptr : latestPM25;   // mô phỏng - xem mqtt_data_contract.md
+  doc["pm10"] = isnan(latestPM10) ? nullptr : latestPM10;   // mô phỏng - xem mqtt_data_contract.md
+  doc["co2"] = latestCO2;                                    // mô phỏng - xem mqtt_data_contract.md
   doc["temperature"] = isnan(latestTemp) ? nullptr : latestTemp;
   doc["humidity"] = isnan(latestHumidity) ? nullptr : latestHumidity;
   // TODO: gắn timestamp thật (NTP) - hiện để backend tự gắn giờ nhận nếu thiếu
@@ -152,8 +168,7 @@ void flushBuffer() {
 void setup() {
   Serial.begin(115200);
   dht.begin();
-  PMSSerial.begin(9600, SERIAL_8N1, 16, 17);
-  CO2Serial.begin(9600, SERIAL_8N1, 25, 26);
+  randomSeed(analogRead(0)); // hạt giống ngẫu nhiên cho dữ liệu mô phỏng PM/CO2 (chân bỏ trống, không đấu gì)
 
   snprintf(mqttTopic, sizeof(mqttTopic), "sensors/%s/data", DEVICE_ID);
 

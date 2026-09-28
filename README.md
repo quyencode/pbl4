@@ -162,6 +162,10 @@ iot/esp32_sensor_node/wiring_diagram.md   (mới tạo)
 - [x] Sơ đồ không trùng chân giữa các cảm biến
 - [x] Bình và Quyến đọc hiểu được sơ đồ mà không cần hỏi lại
 
+> ⚠️ **Cập nhật sau đó:** đã quyết định bỏ mua PMS5003/MH-Z19B do giới hạn ngân sách,
+> thay bằng dữ liệu mô phỏng trong firmware. Sơ đồ đấu nối và code hiện chỉ còn DHT11.
+> Xem `iot/esp32_sensor_node/wiring_diagram.md` và `iot/mqtt_data_contract.md`.
+
 ---
 
 ## Task A1.2 – Dựng môi trường lập trình ESP32
@@ -361,6 +365,10 @@ Dashboard hiển thị dữ liệu tĩnh/mock
 
 ## Task A2.1 – Đọc thử từng cảm biến qua Serial Monitor
 
+> ⚠️ PM2.5/PM10 (PMS5003) và CO2 (MH-Z19B) không còn là phần cứng thật — 2 hàm dưới
+> đây giờ sinh dữ liệu mô phỏng (xem `iot/mqtt_data_contract.md`). Chỉ DHT11 là đọc
+> cảm biến thật.
+
 ### File
 
 ```text
@@ -370,21 +378,21 @@ iot/esp32_sensor_node/esp32_sensor_node.ino
 ### Hàm
 
 ```cpp
-readPMS5003()
-readMHZ19B()
-dht.readTemperature() / dht.readHumidity()
+readPMS5003()   // mô phỏng PM2.5/PM10
+readMHZ19B()    // mô phỏng CO2
+dht.readTemperature() / dht.readHumidity()   // đọc thật (DHT11)
 ```
 
 ### Việc cần làm
 
-- [ ] Đọc riêng PMS5003, in giá trị PM2.5/PM10 ra Serial
-- [ ] Đọc riêng MH-Z19B, in giá trị CO2 ra Serial
-- [ ] Đọc riêng DHT11, in nhiệt độ/độ ẩm ra Serial
+- [ ] Gọi thử `readPMS5003()`/`readMHZ19B()`, in giá trị mô phỏng PM2.5/PM10/CO2 ra Serial
+- [ ] Đọc riêng DHT11, in nhiệt độ/độ ẩm thật ra Serial
+- [ ] Chạy quan sát vài phút, xác nhận giá trị mô phỏng biến thiên có quy luật (không đứng yên, không nhảy vô lý)
 
 ### Kiểm tra
 
-- [ ] Giá trị đọc được nằm trong dải hợp lý (PM2.5 > 0, CO2 300–5000 ppm)
-- [ ] Không có giá trị `NaN` liên tục khi cảm biến hoạt động bình thường
+- [ ] Giá trị mô phỏng nằm trong dải đã đặt trong code (PM2.5 5–150 µg/m³, CO2 380–2000 ppm)
+- [ ] Không có giá trị `NaN` liên tục ở DHT11 khi cảm biến hoạt động bình thường
 
 ---
 
@@ -882,15 +890,18 @@ backend/app/main.py
 
 ## Task C4.2 – Đánh giá chất lượng dữ liệu
 
+> ⚠️ Cột `pm25`/`pm10`/`co2` là dữ liệu mô phỏng từ firmware (xem `iot/mqtt_data_contract.md`),
+> chỉ `temperature`/`humidity` (DHT11) là số đo thật — đánh giá chất lượng cần phân biệt rõ 2 nhóm này.
+
 ### Việc cần làm
 
 - [ ] Kiểm tra tỉ lệ thiếu (`NaN`) theo từng cột
-- [ ] Kiểm tra outlier (giá trị PM2.5/CO2 vượt ngưỡng vật lý hợp lý)
+- [ ] Kiểm tra outlier: với `temperature`/`humidity` xét ngưỡng vật lý hợp lý; với `pm25`/`pm10`/`co2` xét xem có khớp thuật toán mô phỏng (không đứng yên, không âm, không vượt ngưỡng đã đặt trong code) hay không
 - [ ] Ghi nhận vào `ai/MODEL_CARD.md` mục "Dữ liệu"
 
 ### Kiểm tra
 
-- [ ] Có báo cáo ngắn (vài dòng) mô tả chất lượng dữ liệu thật thu được
+- [ ] Có báo cáo ngắn (vài dòng) mô tả chất lượng dữ liệu thu được, nêu rõ phần nào là số đo thật và phần nào là mô phỏng
 
 ---
 
