@@ -1,8 +1,8 @@
 /*
   PBL4 - Node cảm biến chất lượng không khí (ESP32)
   Đọc thật: nhiệt độ/độ ẩm (DHT11)
-  Mô phỏng (không dùng cảm biến thật do giới hạn ngân sách): PM2.5/PM10, CO2
-    - Xem lý do & giới hạn trong iot/mqtt_data_contract.md và báo cáo, mục "Giới hạn đề tài"
+  Mô phỏng (không dùng cảm biến thật): PM2.5/PM10, CO2
+    - Xem chi tiết trong iot/mqtt_data_contract.md
   Gửi dữ liệu qua MQTT theo định dạng trong iot/mqtt_data_contract.md
 
   Thư viện cần cài (Arduino IDE > Library Manager):
@@ -79,7 +79,6 @@ void reconnectMQTT() {
 }
 
 // ====== MÔ PHỎNG PM2.5/PM10 (KHÔNG dùng cảm biến PMS5003 thật) ======
-// Lý do: cắt giảm ngân sách đề tài - xem "Giới hạn đề tài" trong báo cáo.
 // Thuật toán: random walk quanh 1 giá trị nền + thỉnh thoảng có "đợt tăng đột biến"
 // để dữ liệu có hình dạng gần giống thật, thay vì random thuần (dễ làm hỏng việc train AI).
 // Giữ nguyên tên hàm readPMS5003() để không phải sửa readAllSensors() hay các tài liệu khác.

@@ -63,7 +63,7 @@ Kiểm tra: mở `http://localhost:8000/docs` để xem tài liệu API tự sin
 1. Mở `iot/esp32_sensor_node/esp32_sensor_node.ino` bằng Arduino IDE hoặc PlatformIO.
 2. Cài các thư viện: `PubSubClient`, `ArduinoJson`, `DHT sensor library`.
 3. Chỉnh `WIFI_SSID`, `WIFI_PASSWORD`, `MQTT_BROKER` (IP máy chạy Docker), `DEVICE_ID`.
-4. Hoàn thiện hàm `readPMS5003()` và `readMHZ19B()` theo datasheet cảm biến thật.
+4. Hàm `readPMS5003()` và `readMHZ19B()` đã viết sẵn dạng **mô phỏng** (không cần chỉnh theo datasheet cảm biến thật, xem `iot/mqtt_data_contract.md`) — chỉ cần đấu đúng dây DHT11 theo `iot/esp32_sensor_node/wiring_diagram.md`.
 5. Nạp code và mở Serial Monitor để kiểm tra log.
 
 ## 4. Huấn luyện & chạy mô hình AI

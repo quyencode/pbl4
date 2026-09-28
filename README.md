@@ -162,8 +162,8 @@ iot/esp32_sensor_node/wiring_diagram.md   (mới tạo)
 - [x] Sơ đồ không trùng chân giữa các cảm biến
 - [x] Bình và Quyến đọc hiểu được sơ đồ mà không cần hỏi lại
 
-> ⚠️ **Cập nhật sau đó:** đã quyết định bỏ mua PMS5003/MH-Z19B do giới hạn ngân sách,
-> thay bằng dữ liệu mô phỏng trong firmware. Sơ đồ đấu nối và code hiện chỉ còn DHT11.
+> ⚠️ **Cập nhật sau đó:** đã đổi sang dùng dữ liệu mô phỏng cho PM2.5/PM10/CO2 thay vì
+> mua PMS5003/MH-Z19B. Sơ đồ đấu nối và code hiện chỉ còn DHT11.
 > Xem `iot/esp32_sensor_node/wiring_diagram.md` và `iot/mqtt_data_contract.md`.
 
 ---

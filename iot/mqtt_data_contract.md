@@ -33,11 +33,10 @@ cả nhóm đồng ý trước khi sửa code**, vì cả 4 module đều phụ 
 
 > ⚠️ **Ghi chú quan trọng (từ Tuần 2):** `pm25`, `pm10`, `co2` hiện là **dữ liệu mô
 > phỏng** được sinh trong firmware ESP32 (random walk + dao động ngày/đêm), **không**
-> đọc từ cảm biến PMS5003/MH-Z19B thật, do giới hạn ngân sách đề tài. Chỉ
-> `temperature`/`humidity` (DHT11) là số đo thật. Tên field, kiểu dữ liệu, đơn vị và
-> toàn bộ format JSON **không đổi** — Backend/AI/Web không cần sửa code. Xem chi tiết
-> lý do & tác động (đặc biệt với việc huấn luyện/đánh giá mô hình AI) trong báo cáo,
-> mục "Giới hạn đề tài", và trong `ai/MODEL_CARD.md`.
+> đọc từ cảm biến PMS5003/MH-Z19B thật. Chỉ `temperature`/`humidity` (DHT11) là số đo
+> thật. Tên field, kiểu dữ liệu, đơn vị và toàn bộ format JSON **không đổi** —
+> Backend/AI/Web không cần sửa code. Xem tác động với việc huấn luyện/đánh giá mô hình
+> AI trong `ai/MODEL_CARD.md`.
 
 Node nào chưa đọc được cảm biến nào thì gửi `null` cho trường đó — Backend cần chấp
 nhận `null` và không được crash.

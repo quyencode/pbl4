@@ -1,11 +1,9 @@
 # Sơ đồ đấu nối — Node cảm biến ESP32 (Task A1.1)
 
-> ⚠️ **Cập nhật:** PM2.5/PM10 (PMS5003) và CO2 (MH-Z19B) đã **bỏ khỏi phần cứng thật**
-> do giới hạn ngân sách đề tài. Hai giá trị này giờ được **mô phỏng trong firmware**
-> (xem `esp32_sensor_node.ino`, hàm `readPMS5003()` / `readMHZ19B()`) — không cần
-> mua hay đấu nối 2 module này nữa. Chỉ còn **DHT11** là cảm biến thật cần lắp.
-> Chi tiết lý do & giới hạn: xem `iot/mqtt_data_contract.md` và báo cáo, mục
-> "Giới hạn đề tài".
+> ⚠️ **Cập nhật:** PM2.5/PM10 (PMS5003) và CO2 (MH-Z19B) đã **bỏ khỏi phần cứng thật**,
+> giờ được **mô phỏng trong firmware** (xem `esp32_sensor_node.ino`, hàm
+> `readPMS5003()` / `readMHZ19B()`) — không cần mua hay đấu nối 2 module này nữa.
+> Chỉ còn **DHT11** là cảm biến thật cần lắp. Chi tiết: xem `iot/mqtt_data_contract.md`.
 
 ## 1. Tổng quan kết nối
 
