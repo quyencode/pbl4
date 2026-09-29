@@ -24,19 +24,22 @@ cả nhóm đồng ý trước khi sửa code**, vì cả 4 module đều phụ 
 | Trường | Kiểu | Đơn vị | Ghi chú |
 |---|---|---|---|
 | `device_id` | string | — | định danh duy nhất mỗi node, dạng `node-XX` |
-| `pm25` | float | µg/m³ | bụi mịn PM2.5 — **mô phỏng, xem ghi chú bên dưới** |
-| `pm10` | float | µg/m³ | bụi mịn PM10 — **mô phỏng, xem ghi chú bên dưới** |
+| `pm25` | float | µg/m³ | bụi mịn PM2.5 — số đo thật (PMS5003) |
+| `pm10` | float | µg/m³ | bụi mịn PM10 — số đo thật (PMS5003) |
 | `co2` | int | ppm | nồng độ CO2 — **mô phỏng, xem ghi chú bên dưới** |
 | `temperature` | float | °C | số đo thật (DHT11) |
 | `humidity` | float | % | số đo thật (DHT11) |
 | `timestamp` | string | ISO-8601 | giờ đo tại node (UTC hoặc giờ VN thống nhất trước) |
 
-> ⚠️ **Ghi chú quan trọng (từ Tuần 2):** `pm25`, `pm10`, `co2` hiện là **dữ liệu mô
-> phỏng** được sinh trong firmware ESP32 (random walk + dao động ngày/đêm), **không**
-> đọc từ cảm biến PMS5003/MH-Z19B thật. Chỉ `temperature`/`humidity` (DHT11) là số đo
+> ⚠️ **Ghi chú quan trọng (cập nhật Tuần 4):** `pm25`, `pm10` đọc từ cảm biến
+> **PMS5003 thật** qua UART. PMS5003 đã đặt mua nhưng đang **về trễ** (~7-9 ngày kể từ
+> đầu Tuần 4) — trong lúc chờ hàng, firmware **tự động fallback** sang dữ liệu mô
+> phỏng cho `pm25`/`pm10` (không đứt luồng dữ liệu), rồi tự chuyển sang đọc thật ngay
+> khi cảm biến được cắm, không cần sửa code hay data contract. `co2` vẫn luôn là
+> **dữ liệu mô phỏng** (chưa mua MH-Z19B). `temperature`/`humidity` (DHT11) là số đo
 > thật. Tên field, kiểu dữ liệu, đơn vị và toàn bộ format JSON **không đổi** —
-> Backend/AI/Web không cần sửa code. Xem tác động với việc huấn luyện/đánh giá mô hình
-> AI trong `ai/MODEL_CARD.md`.
+> Backend/AI/Web không cần sửa code dù dữ liệu pm25/pm10 đang là thật hay tạm mô
+> phỏng. Xem tác động với việc huấn luyện/đánh giá mô hình AI trong `ai/MODEL_CARD.md`.
 
 Node nào chưa đọc được cảm biến nào thì gửi `null` cho trường đó — Backend cần chấp
 nhận `null` và không được crash.

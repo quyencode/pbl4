@@ -162,8 +162,9 @@ iot/esp32_sensor_node/wiring_diagram.md   (mới tạo)
 - [x] Sơ đồ không trùng chân giữa các cảm biến
 - [x] Bình và Quyến đọc hiểu được sơ đồ mà không cần hỏi lại
 
-> ⚠️ **Cập nhật sau đó:** đã đổi sang dùng dữ liệu mô phỏng cho PM2.5/PM10/CO2 thay vì
-> mua PMS5003/MH-Z19B. Sơ đồ đấu nối và code hiện chỉ còn DHT11.
+> ⚠️ **Cập nhật sau đó:** ban đầu đổi sang dùng dữ liệu mô phỏng cho PM2.5/PM10/CO2
+> thay vì mua PMS5003/MH-Z19B. Sau đó (Tuần 2) đã **mua lại PMS5003**, dự kiến về sau
+> ~8 ngày — PM2.5/PM10 sẽ quay lại là số đo thật. CO2 (MH-Z19B) vẫn tiếp tục mô phỏng.
 > Xem `iot/esp32_sensor_node/wiring_diagram.md` và `iot/mqtt_data_contract.md`.
 
 ---
@@ -365,9 +366,10 @@ Dashboard hiển thị dữ liệu tĩnh/mock
 
 ## Task A2.1 – Đọc thử từng cảm biến qua Serial Monitor
 
-> ⚠️ PM2.5/PM10 (PMS5003) và CO2 (MH-Z19B) không còn là phần cứng thật — 2 hàm dưới
-> đây giờ sinh dữ liệu mô phỏng (xem `iot/mqtt_data_contract.md`). Chỉ DHT11 là đọc
-> cảm biến thật.
+> ⚠️ **Cập nhật (Tuần 2):** PMS5003 đã mua lại, dự kiến về sau ~8 ngày —
+> `readPMS5003()` giờ đọc cảm biến thật qua UART, không còn mô phỏng. CO2 (MH-Z19B)
+> vẫn chưa mua, `readMHZ19B()` tiếp tục sinh dữ liệu mô phỏng (xem
+> `iot/mqtt_data_contract.md`).
 
 ### File
 
@@ -378,21 +380,23 @@ iot/esp32_sensor_node/esp32_sensor_node.ino
 ### Hàm
 
 ```cpp
-readPMS5003()   // mô phỏng PM2.5/PM10
+readPMS5003()   // đọc thật qua UART (PMS5003)
 readMHZ19B()    // mô phỏng CO2
 dht.readTemperature() / dht.readHumidity()   // đọc thật (DHT11)
 ```
 
 ### Việc cần làm
 
-- [ ] Gọi thử `readPMS5003()`/`readMHZ19B()`, in giá trị mô phỏng PM2.5/PM10/CO2 ra Serial
+- [ ] Sau khi PMS5003 về hàng: đấu nối theo `wiring_diagram.md`, gọi thử `readPMS5003()`, in giá trị PM2.5/PM10 thật ra Serial
+- [ ] Gọi thử `readMHZ19B()`, in giá trị mô phỏng CO2 ra Serial
 - [ ] Đọc riêng DHT11, in nhiệt độ/độ ẩm thật ra Serial
-- [ ] Chạy quan sát vài phút, xác nhận giá trị mô phỏng biến thiên có quy luật (không đứng yên, không nhảy vô lý)
+- [ ] Chạy quan sát vài phút: PM2.5/PM10 (thật) và CO2 (mô phỏng) đều biến thiên có quy luật, không đứng yên/không nhảy vô lý
 
 ### Kiểm tra
 
-- [ ] Giá trị mô phỏng nằm trong dải đã đặt trong code (PM2.5 5–150 µg/m³, CO2 380–2000 ppm)
-- [ ] Không có giá trị `NaN` liên tục ở DHT11 khi cảm biến hoạt động bình thường
+- [ ] Giá trị PM2.5/PM10 đọc từ PMS5003 hợp lý so với môi trường thật (đối chiếu bằng mắt/thiết bị đo tham khảo nếu có)
+- [ ] Giá trị mô phỏng CO2 nằm trong dải đã đặt trong code (380–2000 ppm)
+- [ ] Không có giá trị `NaN` liên tục ở DHT11 hoặc PMS5003 khi cảm biến hoạt động bình thường
 
 ---
 
@@ -801,14 +805,24 @@ chạy được xuyên suốt lần đầu tiên, dù còn thô.
 
 ## Task A4.1 – Lắp node hoàn chỉnh, chạy độc lập
 
+> ⚠️ **Cập nhật (Tuần 4):** PMS5003 đã đặt mua nhưng dự kiến về trễ ~7-9 ngày nữa,
+> chưa kịp có khi bắt đầu Tuần 4. Firmware đã có cơ chế **fallback tự động**: nếu
+> PMS5003 chưa cắm, PM2.5/PM10 tạm dùng dữ liệu mô phỏng (không đứt luồng dữ liệu);
+> khi nào cắm cảm biến thật vào thì tự chuyển sang đọc thật, không cần sửa code
+> (xem `readAllSensors()` trong `esp32_sensor_node.ino`). Nhờ vậy task này **vẫn làm
+> được ngay** mà không cần chờ hàng về — chạy độc lập 12 giờ trước bằng dữ liệu tạm,
+> rồi lắp lại/kiểm tra thêm 1 lần sau khi PMS5003 về.
+
 ### Việc cần làm
 
 - [ ] Đóng gói node vào hộp/case tạm, cấp nguồn ổn định
 - [ ] Đặt node ở vị trí thử nghiệm thực tế (phòng lab hoặc ngoài trời)
+- [ ] Sau khi PMS5003 về hàng: đấu nối theo `wiring_diagram.md`, xác nhận node tự chuyển từ mô phỏng sang đọc thật (xem log Serial "PM/PM10: that")
 
 ### Kiểm tra
 
 - [ ] Node hoạt động liên tục 12 giờ không cần cắm lại máy tính
+- [ ] (Sau khi có PMS5003) dữ liệu PM2.5/PM10 gửi lên là số đo thật, không còn mô phỏng
 
 ---
 
@@ -890,13 +904,14 @@ backend/app/main.py
 
 ## Task C4.2 – Đánh giá chất lượng dữ liệu
 
-> ⚠️ Cột `pm25`/`pm10`/`co2` là dữ liệu mô phỏng từ firmware (xem `iot/mqtt_data_contract.md`),
-> chỉ `temperature`/`humidity` (DHT11) là số đo thật — đánh giá chất lượng cần phân biệt rõ 2 nhóm này.
+> ⚠️ **Cập nhật (Tuần 2):** `pm25`/`pm10` (PMS5003) và `temperature`/`humidity` (DHT11)
+> là số đo thật. Chỉ còn `co2` là dữ liệu mô phỏng từ firmware (xem
+> `iot/mqtt_data_contract.md`) — đánh giá chất lượng cần phân biệt rõ 2 nhóm này.
 
 ### Việc cần làm
 
 - [ ] Kiểm tra tỉ lệ thiếu (`NaN`) theo từng cột
-- [ ] Kiểm tra outlier: với `temperature`/`humidity` xét ngưỡng vật lý hợp lý; với `pm25`/`pm10`/`co2` xét xem có khớp thuật toán mô phỏng (không đứng yên, không âm, không vượt ngưỡng đã đặt trong code) hay không
+- [ ] Kiểm tra outlier: với `temperature`/`humidity`/`pm25`/`pm10` (số đo thật) xét ngưỡng vật lý hợp lý; với `co2` (mô phỏng) xét xem có khớp thuật toán mô phỏng (không đứng yên, không âm, không vượt ngưỡng đã đặt trong code) hay không
 - [ ] Ghi nhận vào `ai/MODEL_CARD.md` mục "Dữ liệu"
 
 ### Kiểm tra
