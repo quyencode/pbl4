@@ -2,61 +2,110 @@ import React, { useEffect, useState } from "react";
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
 } from "recharts";
-import { getLatestReadings, getReadingsHistory, getLatestForecast, connectLiveSocket } from "./api.js";
+import { getLatestReadingForDevice, getReadingsHistory, getLatestForecast, connectLiveSocket } from "./api.js";
 import { MOCK_LATEST, MOCK_HISTORY } from "./mockData.js";
 
 const DEFAULT_DEVICE_ID = "node-01";
+const MAX_HISTORY_POINTS = 168; // khớp mặc định limit của getReadingsHistory (7 ngày * 24h)
 
 export default function App() {
   const [latest, setLatest] = useState(null);
   const [history, setHistory] = useState([]);
   const [forecast, setForecast] = useState(null);
-  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [usingMock, setUsingMock] = useState(false);
+  const [noRealDataYet, setNoRealDataYet] = useState(false);
 
   useEffect(() => {
-    // Tải dữ liệu ban đầu
-    getLatestReadings()
-      .then(setLatest)
-      .catch((e) => {
-        // Backend chưa chạy -> dùng dữ liệu giả lập để vẫn xem được layout
-        console.warn("Không gọi được API /readings/latest, dùng dữ liệu mẫu:", e.message);
+    let cancelled = false;
+
+    async function loadInitialData() {
+      const [latestResult, historyResult] = await Promise.allSettled([
+        getLatestReadingForDevice(DEFAULT_DEVICE_ID),
+        getReadingsHistory(DEFAULT_DEVICE_ID),
+      ]);
+
+      if (cancelled) return;
+
+      if (latestResult.status === "fulfilled") {
+        if (latestResult.value) {
+          setLatest(latestResult.value);
+        } else {
+          // API thật đã trả lời (không lỗi) nhưng chưa có bản ghi nào cho node này
+          setNoRealDataYet(true);
+        }
+      } else {
+        console.warn("Không gọi được API /readings/latest, dùng dữ liệu mẫu:", latestResult.reason?.message);
         setLatest(MOCK_LATEST);
         setUsingMock(true);
-      });
-    getReadingsHistory(DEFAULT_DEVICE_ID)
-      .then((res) => setHistory(res.items))
-      .catch((e) => {
-        console.warn("Không gọi được API /readings, dùng dữ liệu mẫu:", e.message);
+      }
+
+      if (historyResult.status === "fulfilled") {
+        const items = historyResult.value.items || [];
+        if (items.length > 0) {
+          setHistory(items);
+        } else {
+          setNoRealDataYet(true);
+        }
+      } else {
+        console.warn("Không gọi được API /readings, dùng dữ liệu mẫu:", historyResult.reason?.message);
         setHistory(MOCK_HISTORY);
         setUsingMock(true);
-      });
-    getLatestForecast(DEFAULT_DEVICE_ID).then(setForecast).catch(() => {});
+      }
 
-    // Kết nối realtime - TODO: cập nhật `history`/`latest` khi có message mới
+      setLoading(false);
+    }
+
+    loadInitialData();
+
+    getLatestForecast(DEFAULT_DEVICE_ID)
+      .then((f) => !cancelled && setForecast(f))
+      .catch(() => {});
+
+    // Realtime: mỗi message từ /ws/live có cùng cấu trúc 1 item của /api/readings,
+    // kèm device_id (xem mqtt_data_contract.md) - chỉ cập nhật nếu đúng node đang xem.
     const socket = connectLiveSocket((data) => {
-      console.log("Dữ liệu realtime:", data);
-      // TODO: setHistory((prev) => [...prev.slice(-167), data]);
+      if (data.device_id !== DEFAULT_DEVICE_ID) return;
+      setLatest(data);
+      setUsingMock(false);
+      setNoRealDataYet(false);
+      setHistory((prev) => [...prev.slice(-(MAX_HISTORY_POINTS - 1)), data]);
     });
     socket.onerror = () => {
       // Backend/WS chưa chạy -> bỏ qua, không phải lỗi hiển thị
     };
-    return () => socket.close();
+
+    return () => {
+      cancelled = true;
+      socket.close();
+    };
   }, []);
 
   return (
     <div style={{ fontFamily: "sans-serif", maxWidth: 960, margin: "0 auto", padding: 24 }}>
       <h1>Giám sát &amp; Dự báo Chất lượng Không khí </h1>
 
+      {loading && <p>Đang tải dữ liệu…</p>}
+
       {usingMock && (
         <p style={{ color: "#b45309", background: "#fffbeb", padding: "8px 12px", borderRadius: 6 }}>
           Đang hiển thị dữ liệu mẫu (backend chưa chạy). Chạy <code>docker compose up -d</code> để xem dữ liệu thật.
         </p>
       )}
-      {error && <p style={{ color: "red" }}>Lỗi: {error} (backend đã chạy chưa?)</p>}
+
+      {!usingMock && noRealDataYet && (
+        <p style={{ color: "#1d4ed8", background: "#eff6ff", padding: "8px 12px", borderRadius: 6 }}>
+          Đã kết nối API thật nhưng chưa có dữ liệu cho node <code>{DEFAULT_DEVICE_ID}</code> — kiểm tra xem node
+          cảm biến và MQTT subscriber đã publish/ghi dữ liệu chưa.
+        </p>
+      )}
 
       <section style={{ display: "flex", flexWrap: "wrap", gap: 16, marginBottom: 32 }}>
-        <StatCard title="AQI hiện tại" value={latest?.aqi ?? "—"} />
+        <StatCard
+          title="AQI hiện tại"
+          value={latest?.aqi ?? "—"}
+          hint={latest && latest.aqi == null ? "Chờ Backend/AI tính AQI (chưa có trong /api/readings)" : undefined}
+        />
         <StatCard title="PM2.5 (µg/m³)" value={latest?.pm25 ?? "—"} />
         <StatCard title="Trạng thái" value={latest ? "Đang hoạt động" : "Chưa có dữ liệu"} />
       </section>
@@ -96,7 +145,7 @@ export default function App() {
   );
 }
 
-function StatCard({ title, value }) {
+function StatCard({ title, value, hint }) {
   return (
     <div
       style={{
@@ -109,6 +158,7 @@ function StatCard({ title, value }) {
     >
       <div style={{ fontSize: 13, color: "#6b7280" }}>{title}</div>
       <div style={{ fontSize: 28, fontWeight: 600 }}>{value}</div>
+      {hint && <div style={{ fontSize: 11, color: "#9ca3af", marginTop: 4 }}>{hint}</div>}
     </div>
   );
 }

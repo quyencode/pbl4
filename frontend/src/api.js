@@ -1,9 +1,13 @@
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
 
-export async function getLatestReadings() {
+export async function getLatestReadingForDevice(deviceId) {
   const res = await fetch(`${API_BASE_URL}/api/readings/latest`);
   if (!res.ok) throw new Error("Không lấy được dữ liệu mới nhất");
-  return res.json();
+  const data = await res.json();
+  const items = data.items || [];
+  // /api/readings/latest trả về bản ghi mới nhất của MỌI node (xem mqtt_data_contract.md)
+  // -> Dashboard chỉ hiển thị 1 node nên phải tự lọc đúng device_id ở đây.
+  return items.find((item) => item.device_id === deviceId) || null;
 }
 
 export async function getReadingsHistory(deviceId, limit = 168) {
