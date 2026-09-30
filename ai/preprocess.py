@@ -7,7 +7,6 @@ def clean_data(df):
     Task C2.1: Loại bỏ bản ghi thiếu giá trị mục tiêu (target/pm25 hoặc AQI), 
     nội suy các cột số còn thiếu.
     """
-    # Giả sử cột mục tiêu cần dự báo là 'pm25' hoặc 'AQI'
     target_col = 'pm25' if 'pm25' in df.columns else df.columns[-1]
     
     # 1. Loại bỏ các dòng bị thiếu giá trị target
@@ -61,8 +60,32 @@ def load_and_preprocess_data(file_path):
     
     return df_resampled, scaled_data, scaler
 
+def make_sliding_windows(data, window_size=24, horizon=1):
+    """
+    Task C3.2: Tạo cửa sổ trượt cho dữ liệu chuỗi thời gian.
+    - data: Mảng numpy đã được scale.
+    - window_size: Số bước thời gian lịch sử (ví dụ: 24 giờ).
+    - horizon: Số bước thời gian cần dự báo trước.
+    """
+    if len(data.shape) == 1:
+        data = data.reshape(-1, 1)
+        
+    X, y = [], []
+    n_samples = len(data)
+    
+    for i in range(window_size, n_samples - horizon + 1):
+        # Lấy đoạn lịch sử làm đầu vào X
+        X.append(data[i - window_size:i])
+        # Lấy đoạn tương lai làm nhãn y
+        y.append(data[i:i + horizon, 0])
+        
+    X = np.array(X)
+    y = np.array(y)
+    
+    return X, y
+
 if __name__ == "__main__":
-    # Task C2.2: Test thử pipeline và in kiểm tra head() / describe()
+    # Task C2.2 & C3.2: Test thử pipeline và hàm tạo cửa sổ trượt
     file_path = "ai/data/mock_readings.csv"
     print("Đang kiểm tra pipeline trên:", file_path)
     
@@ -77,3 +100,8 @@ if __name__ == "__main__":
     # Kiểm tra NaN
     nan_count = df_resampled.isna().sum().sum()
     print(f"\nTổng số giá trị NaN còn lại: {nan_count} (Yêu cầu: 0)")
+    
+    # Test nhanh make_sliding_windows
+    X_test, y_test = make_sliding_windows(scaled_data, window_size=24, horizon=1)
+    print(f"\nTest X shape: {X_test.shape} (Kỳ vọng: (n, 24, 1))")
+    print(f"Test y shape: {y_test.shape} (Kỳ vọng: (n, 1))")
