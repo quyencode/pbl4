@@ -604,8 +604,8 @@ mqttClient.publish()
 
 ### Việc cần làm
 
-- [ ] Ghép `readAllSensors()` + `buildPayload()` + publish theo chu kỳ `SEND_INTERVAL_MS`
-- [ ] Xử lý reconnect khi mất kết nối MQTT
+- [x] Ghép `readAllSensors()` + `buildPayload()` + publish theo chu kỳ `SEND_INTERVAL_MS`
+- [x] Xử lý reconnect khi mất kết nối MQTT
 
 ### Kiểm tra
 
