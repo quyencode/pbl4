@@ -604,13 +604,13 @@ mqttClient.publish()
 
 ### Việc cần làm
 
-- [ ] Ghép `readAllSensors()` + `buildPayload()` + publish theo chu kỳ `SEND_INTERVAL_MS`
-- [ ] Xử lý reconnect khi mất kết nối MQTT
+- [x] Ghép `readAllSensors()` + `buildPayload()` + publish theo chu kỳ `SEND_INTERVAL_MS`
+- [x] Xử lý reconnect khi mất kết nối MQTT
 
 ### Kiểm tra
 
-- [ ] Node tự publish đều đặn mỗi 5 phút không cần can thiệp
-- [ ] Rút dây mạng rồi cắm lại, node tự reconnect và publish tiếp
+- [x] Node tự publish đều đặn mỗi 5 phút không cần can thiệp
+- [x] Rút dây mạng rồi cắm lại, node tự reconnect và publish tiếp
 
 ---
 
