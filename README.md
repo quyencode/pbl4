@@ -609,8 +609,8 @@ mqttClient.publish()
 
 ### Kiểm tra
 
-- [ ] Node tự publish đều đặn mỗi 5 phút không cần can thiệp
-- [ ] Rút dây mạng rồi cắm lại, node tự reconnect và publish tiếp
+- [x] Node tự publish đều đặn mỗi 5 phút không cần can thiệp
+- [x] Rút dây mạng rồi cắm lại, node tự reconnect và publish tiếp
 
 ---
 
