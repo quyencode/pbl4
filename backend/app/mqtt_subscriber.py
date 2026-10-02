@@ -110,6 +110,13 @@ def on_connect(client: mqtt.Client, userdata: Any, flags: Any, rc: int) -> None:
         logger.error("MQTT connection failed (return code %s)", rc)
 
 
+def on_disconnect(client: mqtt.Client, userdata: Any, rc: int) -> None:
+    if rc == 0:
+        logger.info("Disconnected cleanly from MQTT broker")
+    else:
+        logger.warning("Unexpected MQTT disconnect (return code %s); reconnecting", rc)
+
+
 def on_message(client: mqtt.Client, userdata: Any, msg: Any) -> None:
     try:
         data = json.loads(msg.payload.decode("utf-8"))
@@ -120,6 +127,17 @@ def on_message(client: mqtt.Client, userdata: Any, msg: Any) -> None:
     if not validate_payload(data):
         logger.warning("Ignoring invalid sensor payload on %s: %r", msg.topic, data)
         return
+
+    topic_parts = msg.topic.split("/")
+    if len(topic_parts) == 3 and topic_parts[0] == MQTT_TOPIC_PREFIX and topic_parts[2] == "data":
+        topic_device_id = topic_parts[1]
+        if data["device_id"].strip() != topic_device_id:
+            logger.warning(
+                "Ignoring payload whose device_id %r does not match topic device %r",
+                data["device_id"],
+                topic_device_id,
+            )
+            return
 
     if not any(data.get(field) is not None for field in SENSOR_FIELDS):
         logger.warning("Ignoring sensor payload without sensor values on %s", msg.topic)
@@ -137,10 +155,20 @@ def start_mqtt_listener() -> mqtt.Client:
     """Connect and start the MQTT network loop in the background."""
     client = mqtt.Client()
     client.on_connect = on_connect
+    client.on_disconnect = on_disconnect
     client.on_message = on_message
-    client.connect(MQTT_BROKER_HOST, MQTT_BROKER_PORT, keepalive=60)
+    client.connect_async(MQTT_BROKER_HOST, MQTT_BROKER_PORT, keepalive=60)
     client.loop_start()
     return client
+
+
+def stop_mqtt_listener(client: mqtt.Client | None) -> None:
+    """Stop the MQTT network loop and release the shared InfluxDB resources."""
+    if client is not None:
+        client.loop_stop()
+        client.disconnect()
+    _write_api.close()
+    _influx_client.close()
 
 
 if __name__ == "__main__":

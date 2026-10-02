@@ -21,6 +21,10 @@ class ReadingsResponse(BaseModel):
     items: List[SensorReading]
 
 
+class LatestReadingsResponse(BaseModel):
+    items: List[SensorReading]
+
+
 class ForecastPoint(BaseModel):
     timestamp: datetime
     aqi: Optional[float] = None
