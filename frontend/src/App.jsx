@@ -4,6 +4,7 @@ import {
 } from "recharts";
 import { getLatestReadingForDevice, getReadingsHistory, getLatestForecast, connectLiveSocket } from "./api.js";
 import { MOCK_LATEST, MOCK_HISTORY } from "./mockData.js";
+import "./App.css";
 
 const DEFAULT_DEVICE_ID = "node-01";
 const MAX_HISTORY_POINTS = 168; // khớp mặc định limit của getReadingsHistory (7 ngày * 24h)
@@ -87,84 +88,112 @@ export default function App() {
     };
   }, []);
 
+  const isLive = Boolean(latest) && !usingMock;
+
   return (
-    <div style={{ fontFamily: "sans-serif", maxWidth: 960, margin: "0 auto", padding: 24 }}>
-      <h1>Giám sát &amp; Dự báo Chất lượng Không khí </h1>
+    <div className="page">
+      <div className="sun-glow" aria-hidden="true" />
+      <div className="cloud cloud--1" aria-hidden="true" />
+      <div className="cloud cloud--2" aria-hidden="true" />
 
-      {loading && <p>Đang tải dữ liệu…</p>}
+      <div className="shell">
+        <header className="app-header">
+          <div className="app-header-text">
+            <h1>
+              Hôm nay không khí thế nào? <span className="header-emoji">🌞</span>
+            </h1>
+            <p className="app-subtitle">PBL4 · IoT cảm biến · AI dự báo · Realtime dashboard</p>
+          </div>
+          <span className={`status-pill ${isLive ? "status-pill--live" : "status-pill--idle"}`}>
+            <span className="status-dot" />
+            {isLive ? "Đang hoạt động" : "Chưa có dữ liệu"}
+          </span>
+        </header>
 
-      {usingMock && (
-        <p style={{ color: "#b45309", background: "#fffbeb", padding: "8px 12px", borderRadius: 6 }}>
-          Đang hiển thị dữ liệu mẫu (backend chưa chạy). Chạy <code>docker compose up -d</code> để xem dữ liệu thật.
-        </p>
-      )}
+        {loading && <p className="loading-text">Đang tải dữ liệu…</p>}
 
-      {!usingMock && noRealDataYet && (
-        <p style={{ color: "#1d4ed8", background: "#eff6ff", padding: "8px 12px", borderRadius: 6 }}>
-          Đã kết nối API thật nhưng chưa có dữ liệu cho node <code>{DEFAULT_DEVICE_ID}</code> — kiểm tra xem node
-          cảm biến và MQTT subscriber đã publish/ghi dữ liệu chưa.
-        </p>
-      )}
+        {usingMock && (
+          <div className="banner banner--warning">
+            <span className="banner-icon">⚠️</span>
+            <span>
+              Đang hiển thị dữ liệu mẫu (backend chưa chạy). Chạy <code>docker compose up -d</code> để xem dữ liệu thật.
+            </span>
+          </div>
+        )}
 
-      <section style={{ display: "flex", flexWrap: "wrap", gap: 16, marginBottom: 32 }}>
-        <StatCard
-          title="AQI hiện tại"
-          value={formatNumber(latest?.aqi, 0)}
-          hint={latest && latest.aqi == null ? "Chờ Backend/AI tính AQI (chưa có trong /api/readings)" : undefined}
-        />
-        <StatCard title="PM2.5 (µg/m³)" value={formatNumber(latest?.pm25, 1)} />
-        <StatCard title="Trạng thái" value={latest ? "Đang hoạt động" : "Chưa có dữ liệu"} />
-      </section>
+        {!usingMock && noRealDataYet && (
+          <div className="banner banner--info">
+            <span className="banner-icon">ℹ️</span>
+            <span>
+              Đã kết nối API thật nhưng chưa có dữ liệu cho node <code>{DEFAULT_DEVICE_ID}</code> — kiểm tra xem node
+              cảm biến và MQTT subscriber đã publish/ghi dữ liệu chưa.
+            </span>
+          </div>
+        )}
 
-      <section style={{ marginBottom: 32 }}>
-        <h2>Xu hướng AQI / PM2.5 (lịch sử)</h2>
-        <ResponsiveContainer width="100%" height={300}>
-          <LineChart data={history}>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="timestamp" hide />
-            <YAxis />
-            <Tooltip />
-            <Legend />
-            <Line type="monotone" dataKey="pm25" name="PM2.5 thực tế" stroke="#2563eb" dot={false} />
-          </LineChart>
-        </ResponsiveContainer>
-      </section>
+        <section className="aqi-ring-wrap">
+          <div className="aqi-ring">
+            <div className="aqi-ring-value">{formatNumber(latest?.aqi, 0)}</div>
+            <div className="aqi-ring-label">Chỉ số AQI</div>
+          </div>
+          {latest && latest.aqi == null && (
+            <p className="aqi-ring-hint">Chờ Backend/AI tính AQI (chưa có trong /api/readings)</p>
+          )}
+        </section>
 
-      <section>
-        <h2>Dự báo AI (24 giờ tới)</h2>
-        {forecast ? (
+        <section className="mini-stat-row">
+          <StatCard icon="🌿" label="PM2.5 (µg/m³)" value={formatNumber(latest?.pm25, 1)} />
+          <StatCard
+            icon={isLive ? "✅" : "⏳"}
+            label="Trạng thái"
+            value={latest ? "Đang hoạt động" : "Chưa có dữ liệu"}
+          />
+        </section>
+
+        <section className="card chart-card">
+          <h2>Xu hướng tuần này (AQI / PM2.5)</h2>
           <ResponsiveContainer width="100%" height={300}>
-            <LineChart data={forecast.predictions}>
-              <CartesianGrid strokeDasharray="3 3" />
+            <LineChart data={history}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#eef2ea" />
               <XAxis dataKey="timestamp" hide />
-              <YAxis />
-              <Tooltip />
+              <YAxis stroke="#84a06a" />
+              <Tooltip contentStyle={{ borderRadius: 14, border: "1px solid #ecfccb" }} />
               <Legend />
-              <Line type="monotone" dataKey="pm25" name="PM2.5 dự báo" stroke="#dc2626" dot={false} />
+              <Line type="monotone" dataKey="pm25" name="PM2.5 thực tế" stroke="#65a30d" strokeWidth={3} dot={false} />
             </LineChart>
           </ResponsiveContainer>
-        ) : (
-          <p>Chưa có dữ liệu dự báo — chạy `ai/predict.py` để tạo dự báo đầu tiên.</p>
-        )}
-      </section>
+        </section>
+
+        <section className="card chart-card">
+          <h2 className="chart-title--forecast">Dự báo AI (24 giờ tới)</h2>
+          {forecast ? (
+            <ResponsiveContainer width="100%" height={300}>
+              <LineChart data={forecast.predictions}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#eef2ea" />
+                <XAxis dataKey="timestamp" hide />
+                <YAxis stroke="#84a06a" />
+                <Tooltip contentStyle={{ borderRadius: 14, border: "1px solid #fef3c7" }} />
+                <Legend />
+                <Line type="monotone" dataKey="pm25" name="PM2.5 dự báo" stroke="#eab308" strokeWidth={3} strokeDasharray="7 5" dot={false} />
+              </LineChart>
+            </ResponsiveContainer>
+          ) : (
+            <p className="empty-text">Chưa có dữ liệu dự báo — chạy <code>ai/predict.py</code> để tạo dự báo đầu tiên.</p>
+          )}
+        </section>
+      </div>
     </div>
   );
 }
 
-function StatCard({ title, value, hint }) {
+function StatCard({ icon, label, value }) {
   return (
-    <div
-      style={{
-        flex: "1 1 160px",
-        minWidth: 160,
-        border: "1px solid #e5e7eb",
-        borderRadius: 8,
-        padding: 16,
-      }}
-    >
-      <div style={{ fontSize: 13, color: "#6b7280" }}>{title}</div>
-      <div style={{ fontSize: 28, fontWeight: 600 }}>{value}</div>
-      {hint && <div style={{ fontSize: 11, color: "#9ca3af", marginTop: 4 }}>{hint}</div>}
+    <div className="mini-stat">
+      <span className="mini-stat-icon">{icon}</span>
+      <div>
+        <div className="mini-stat-label">{label}</div>
+        <div className="mini-stat-value">{value}</div>
+      </div>
     </div>
   );
 }
