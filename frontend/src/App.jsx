@@ -8,6 +8,12 @@ import { MOCK_LATEST, MOCK_HISTORY } from "./mockData.js";
 const DEFAULT_DEVICE_ID = "node-01";
 const MAX_HISTORY_POINTS = 168; // khớp mặc định limit của getReadingsHistory (7 ngày * 24h)
 
+// Task D4.2: làm tròn số liệu hiển thị về 1 chữ số thập phân, giữ "—" khi chưa có dữ liệu
+function formatNumber(value, digits = 1) {
+  if (value === null || value === undefined || Number.isNaN(Number(value))) return "—";
+  return Number(value).toFixed(digits);
+}
+
 export default function App() {
   const [latest, setLatest] = useState(null);
   const [history, setHistory] = useState([]);
@@ -103,10 +109,10 @@ export default function App() {
       <section style={{ display: "flex", flexWrap: "wrap", gap: 16, marginBottom: 32 }}>
         <StatCard
           title="AQI hiện tại"
-          value={latest?.aqi ?? "—"}
+          value={formatNumber(latest?.aqi, 0)}
           hint={latest && latest.aqi == null ? "Chờ Backend/AI tính AQI (chưa có trong /api/readings)" : undefined}
         />
-        <StatCard title="PM2.5 (µg/m³)" value={latest?.pm25 ?? "—"} />
+        <StatCard title="PM2.5 (µg/m³)" value={formatNumber(latest?.pm25, 1)} />
         <StatCard title="Trạng thái" value={latest ? "Đang hoạt động" : "Chưa có dữ liệu"} />
       </section>
 
