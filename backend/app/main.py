@@ -30,6 +30,7 @@ from app.mqtt_subscriber import (
     stop_mqtt_listener,
     start_mqtt_listener,
 )
+from app import postgres_db
 
 logger = logging.getLogger(__name__)
 _influx_client = InfluxDBClient(url=INFLUXDB_URL, token=INFLUXDB_TOKEN, org=INFLUXDB_ORG)
@@ -48,9 +49,7 @@ app.add_middleware(
 # Danh sách kết nối WebSocket đang mở, để đẩy dữ liệu realtime
 active_connections: List[WebSocket] = []
 
-# In-memory store tạm cho dự báo mới nhất theo device_id (demo/dev only)
-# TODO: thay bằng lưu thật ở PostgreSQL (bảng forecast_runs/forecast_points)
-_latest_forecasts: dict = {}
+# Dự báo và cấu hình cảnh báo được lưu thật trong PostgreSQL - xem app/postgres_db.py
 
 
 @app.on_event("startup")
@@ -146,14 +145,18 @@ def _reading_from_record(values: dict) -> SensorReading:
 @app.post("/api/forecasts")
 def submit_forecast(forecast: ForecastSubmission):
     """Khối AI gọi endpoint này sau mỗi lần chạy dự báo."""
-    _latest_forecasts[forecast.device_id] = forecast.dict()
-    # TODO: lưu vào PostgreSQL (forecast_runs + forecast_points)
+    postgres_db.save_forecast(
+        device_id=forecast.device_id,
+        generated_at=forecast.generated_at,
+        horizon_hours=forecast.horizon_hours,
+        predictions=[p.dict() for p in forecast.predictions],
+    )
     return {"status": "received", "device_id": forecast.device_id}
 
 
 @app.get("/api/forecasts/latest")
 def get_latest_forecast(device_id: str):
-    forecast = _latest_forecasts.get(device_id)
+    forecast = postgres_db.get_latest_forecast(device_id)
     if not forecast:
         raise HTTPException(status_code=404, detail="Chưa có dự báo cho node này")
     return forecast
@@ -161,14 +164,21 @@ def get_latest_forecast(device_id: str):
 
 @app.get("/api/alerts/config", response_model=AlertConfig)
 def get_alert_config(device_id: str):
-    # TODO: đọc từ bảng alert_configs trong PostgreSQL
-    return AlertConfig(device_id=device_id)
+    config = postgres_db.get_alert_config(device_id)
+    if not config:
+        # Node chưa từng cấu hình ngưỡng -> trả về mặc định (chưa lưu vào DB)
+        return AlertConfig(device_id=device_id)
+    return AlertConfig(**config)
 
 
 @app.post("/api/alerts/config")
 def set_alert_config(config: AlertConfig):
-    # TODO: upsert vào bảng alert_configs trong PostgreSQL
-    return {"status": "saved", "config": config}
+    saved = postgres_db.upsert_alert_config(
+        device_id=config.device_id,
+        pm25_threshold=config.pm25_threshold,
+        aqi_threshold=config.aqi_threshold,
+    )
+    return {"status": "saved", "config": saved}
 
 
 @app.websocket("/ws/live")
