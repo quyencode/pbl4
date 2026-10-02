@@ -84,6 +84,63 @@ def make_sliding_windows(data, window_size=24, horizon=1):
     
     return X, y
 
+FEATURE_COLUMNS = ["pm25", "pm10", "co2", "temperature", "humidity"]
+
+
+def prepare_dataset(df, window_size=24, horizon=1, train_ratio=0.7, val_ratio=0.15):
+    """
+    Chuẩn bị dữ liệu đa biến (multi-feature) cho train_model.py.
+    - Làm sạch (clean_data) + resample theo giờ (resample_hourly).
+    - Chuẩn hoá các cột trong FEATURE_COLUMNS bằng 1 MinMaxScaler chung
+      (chỉ fit trên phần train để tránh rò rỉ dữ liệu sang val/test).
+    - Cắt chuỗi thời gian theo đúng thứ tự thành train/val/test TRƯỚC khi
+      tạo sliding window (không xáo trộn ngẫu nhiên vì đây là time series).
+    - Tạo sliding window đa biến cho X, nhãn y lấy từ cột "pm25" (target).
+
+    Trả về: (splits, scaler)
+      splits = dict gồm "X_train", "y_train", "X_val", "y_val", "X_test", "y_test"
+      scaler = MinMaxScaler đã fit trên FEATURE_COLUMNS (dùng để inverse_transform)
+    """
+    df = clean_data(df)
+    df = resample_hourly(df)
+
+    missing_cols = [c for c in FEATURE_COLUMNS if c not in df.columns]
+    if missing_cols:
+        raise ValueError(
+            f"Thiếu cột bắt buộc trong dữ liệu: {missing_cols}. "
+            f"Cần đủ các cột: {FEATURE_COLUMNS}"
+        )
+
+    values = df[FEATURE_COLUMNS].values
+    target_idx = FEATURE_COLUMNS.index("pm25")
+
+    n = len(values)
+    train_end = int(n * train_ratio)
+    val_end = int(n * (train_ratio + val_ratio))
+
+    scaler = MinMaxScaler(feature_range=(0, 1))
+    scaler.fit(values[:train_end])
+    scaled = scaler.transform(values)
+
+    def _make_windows(data_slice):
+        X, y = [], []
+        for i in range(window_size, len(data_slice) - horizon + 1):
+            X.append(data_slice[i - window_size:i])
+            y.append(data_slice[i:i + horizon, target_idx])
+        return np.array(X), np.array(y)
+
+    X_train, y_train = _make_windows(scaled[:train_end])
+    X_val, y_val = _make_windows(scaled[train_end:val_end])
+    X_test, y_test = _make_windows(scaled[val_end:])
+
+    splits = {
+        "X_train": X_train, "y_train": y_train,
+        "X_val": X_val, "y_val": y_val,
+        "X_test": X_test, "y_test": y_test,
+    }
+    return splits, scaler
+
+
 if __name__ == "__main__":
     # Task C2.2 & C3.2: Test thử pipeline và hàm tạo cửa sổ trượt
     file_path = "ai/data/mock_readings.csv"
