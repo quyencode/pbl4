@@ -6,20 +6,34 @@ Tài liệu API tự sinh tại: http://localhost:8000/docs
 Các endpoint dưới đây khớp với iot/mqtt_data_contract.md - KHÔNG đổi
 định dạng field mà không cập nhật lại contract và báo cả nhóm.
 """
-import os
-from datetime import datetime
+import json
+import logging
+from datetime import datetime, timezone
 from typing import List, Optional
 
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
+from influxdb_client import InfluxDBClient
 
 from app.schemas import (
     SensorReading,
     ReadingsResponse,
+    LatestReadingsResponse,
     ForecastSubmission,
     AlertConfig,
 )
-from app.mqtt_subscriber import start_mqtt_listener
+from app.mqtt_subscriber import (
+    INFLUXDB_BUCKET,
+    INFLUXDB_ORG,
+    INFLUXDB_TOKEN,
+    INFLUXDB_URL,
+    stop_mqtt_listener,
+    start_mqtt_listener,
+)
+
+logger = logging.getLogger(__name__)
+_influx_client = InfluxDBClient(url=INFLUXDB_URL, token=INFLUXDB_TOKEN, org=INFLUXDB_ORG)
+_mqtt_client = None
 
 app = FastAPI(title="PBL4 Air Quality API", version="0.1.0")
 
@@ -42,7 +56,14 @@ _latest_forecasts: dict = {}
 @app.on_event("startup")
 def on_startup():
     # Bật MQTT subscriber chạy nền cùng lúc với API
-    start_mqtt_listener()
+    global _mqtt_client
+    _mqtt_client = start_mqtt_listener()
+
+
+@app.on_event("shutdown")
+def on_shutdown():
+    stop_mqtt_listener(_mqtt_client)
+    _influx_client.close()
 
 
 @app.get("/health")
@@ -53,24 +74,73 @@ def health_check():
 @app.get("/api/readings", response_model=ReadingsResponse)
 def get_readings(
     device_id: str,
-    from_: Optional[str] = None,
-    to: Optional[str] = None,
-    limit: int = 1000,
+    from_: Optional[datetime] = Query(default=None, alias="from"),
+    to: Optional[datetime] = None,
+    limit: int = Query(default=1000, ge=1, le=10000),
 ):
-    """
-    Lấy dữ liệu lịch sử của một node - dùng cho huấn luyện AI và biểu đồ lịch sử.
-    TODO: truy vấn InfluxDB (Flux query) theo device_id/khoảng thời gian, hiện
-    trả về mảng rỗng làm khung sườn.
-    """
-    # TODO: query_api = influx_client.query_api(); flux query theo from_/to/limit
-    return ReadingsResponse(device_id=device_id, items=[])
+    """Return a node's stored readings, oldest first, with optional time bounds."""
+    if from_ and to and _as_utc(from_) >= _as_utc(to):
+        raise HTTPException(status_code=422, detail="from must be earlier than to")
+
+    start = _flux_time(from_) if from_ else "0"
+    stop = _flux_time(to) if to else None
+    query = (
+        f'from(bucket: {json.dumps(INFLUXDB_BUCKET)}) '
+        f'|> range(start: {start}' + (f", stop: {stop}" if stop else "") + ")\n"
+        '|> filter(fn: (r) => r._measurement == "air_quality")\n'
+        f'|> filter(fn: (r) => r.device_id == {json.dumps(device_id)})\n'
+        '|> pivot(rowKey: ["_time", "device_id"], columnKey: ["_field"], valueColumn: "_value")\n'
+        '|> sort(columns: ["_time"], desc: true)\n'
+        f"|> limit(n: {limit})\n"
+        '|> sort(columns: ["_time"], desc: false)'
+    )
+    try:
+        records = _influx_client.query_api().query(query, org=INFLUXDB_ORG)
+        items = [_reading_from_record(record.values) for table in records for record in table.records]
+    except Exception as exc:
+        logger.exception("InfluxDB query failed for device %s", device_id)
+        raise HTTPException(status_code=503, detail="Reading storage is temporarily unavailable") from exc
+    return ReadingsResponse(device_id=device_id, items=items)
 
 
-@app.get("/api/readings/latest")
+@app.get("/api/readings/latest", response_model=LatestReadingsResponse)
 def get_latest_readings():
-    """Bản ghi mới nhất của MỌI node - dùng cho màn hình chính Dashboard."""
-    # TODO: query InfluxDB lấy last() theo từng device_id
-    return {"items": []}
+    """Return the newest reading for every device that has data."""
+    query = (
+        f'from(bucket: {json.dumps(INFLUXDB_BUCKET)}) |> range(start: 0)\n'
+        '|> filter(fn: (r) => r._measurement == "air_quality")\n'
+        '|> pivot(rowKey: ["_time", "device_id"], columnKey: ["_field"], valueColumn: "_value")\n'
+        '|> group(columns: ["device_id"])\n'
+        '|> sort(columns: ["_time"], desc: true)\n'
+        '|> limit(n: 1)'
+    )
+    try:
+        records = _influx_client.query_api().query(query, org=INFLUXDB_ORG)
+        items = [_reading_from_record(record.values) for table in records for record in table.records]
+    except Exception as exc:
+        logger.exception("InfluxDB latest-readings query failed")
+        raise HTTPException(status_code=503, detail="Reading storage is temporarily unavailable") from exc
+    return LatestReadingsResponse(items=items)
+
+
+def _as_utc(value: datetime) -> datetime:
+    return value.replace(tzinfo=timezone.utc) if value.tzinfo is None else value.astimezone(timezone.utc)
+
+
+def _flux_time(value: datetime) -> str:
+    return _as_utc(value).isoformat().replace("+00:00", "Z")
+
+
+def _reading_from_record(values: dict) -> SensorReading:
+    return SensorReading(
+        device_id=values["device_id"],
+        timestamp=values.get("_time"),
+        pm25=values.get("pm25"),
+        pm10=values.get("pm10"),
+        co2=values.get("co2"),
+        temperature=values.get("temperature"),
+        humidity=values.get("humidity"),
+    )
 
 
 @app.post("/api/forecasts")
