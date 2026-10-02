@@ -45,3 +45,17 @@
 - Thu thập dữ liệu dài hạn hơn
 - Bổ sung dữ liệu khí tượng từ nguồn mở
 - Thử nghiệm thêm kiến trúc Transformer/Attention nếu có thời gian
+## Task4loi Thống kê và đánh giá chất lượng dữ liệu (Dataset Quality)
+- **Tổng số mẫu (Records):** 720 dòng dữ liệu liên tục (`RangeIndex: 720 entries`).
+- **Các đặc trưng (Features):** `device_id`, `timestamp`, `temperature`, `humidity`, `pm25`, `pm10`, `co2`.
+- **Tỷ lệ thiếu dữ liệu (Missing Values):**
+  - `device_id`, `pm10`, `temperature`, `humidity`, `timestamp`: 0% (Hoàn chỉnh).
+  - `pm25`: Thiếu ~1.67% (12 mẫu).
+  - `co2`: Thiếu ~0.97% (7 mẫu).
+  - *Đánh giá:* Tỷ lệ thiếu rất thấp, đã được xử lý làm sạch trước khi đưa vào mô hình.
+- **Biên độ giá trị thực tế & mô phỏng (Min/Max/Mean):**
+  - **Temperature:** Min = 21.60°C, Max = 36.40°C, Mean = 28.49°C
+  - **Humidity:** Min = 55.90%, Max = 88.80%, Mean = 71.95%
+  - **PM2.5:** Min = 16.80 µg/m³, Max = 64.20 µg/m³, Mean = 38.04 µg/m³
+  - **PM10:** Min = 24.10 µg/m³, Max = 102.10 µg/m³, Mean = 59.03 µg/m³
+  - **CO2:** Min = 441.00 ppm, Max = 609.00 ppm, Mean = 500.39 ppm
