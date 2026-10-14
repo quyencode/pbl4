@@ -58,4 +58,115 @@
   - **Humidity:** Min = 55.90%, Max = 88.80%, Mean = 71.95%
   - **PM2.5:** Min = 16.80 µg/m³, Max = 64.20 µg/m³, Mean = 38.04 µg/m³
   - **PM10:** Min = 24.10 µg/m³, Max = 102.10 µg/m³, Mean = 59.03 µg/m³
-  - **CO2:** Min = 441.00 ppm, Max = 609.00 ppm, Mean = 500.39 ppm
+  - **CO2:** Min = 441.00 ppm, Max = 609.00 ppm, Mean = 500.39 ppm#Xây dựng trò chơi 8 số n x n = 3 x 3
+n = 3
+import random as rd
+
+def ZeroP(S):
+  for i in range(n):
+    for j in range(n):
+      if S[i][j] == 0:
+        return i,j
+
+def Up(S):
+  T = [s[:] for s in S]
+  i,j = ZeroP(T)
+  if i==n-1:
+    return None
+  else:
+    T[i][j],T[i+1][j] = T[i+1][j],T[i][j]
+    return T
+
+def Down(S):
+  T = [s[:] for s in S]
+  i,j = ZeroP(T)
+  if i==0:
+    return None
+  else:
+    T[i][j],T[i-1][j] = T[i-1][j],T[i][j]
+    return T
+
+def Left(S):
+  T = [s[:] for s in S]
+  i,j = ZeroP(T)
+  if j==n-1:
+    return None
+  else:
+    T[i][j],T[i][j+1] = T[i][j+1],T[i][j]
+    return T
+
+def Right(S):
+  T = [s[:] for s in S]
+  i,j = ZeroP(T)
+  if j==0:
+    return None
+  else:
+    T[i][j],T[i][j-1] = T[i][j-1],T[i][j]
+    return T
+
+
+S = Goal
+for i in range(2000):
+  i,j = ZeroP(S)
+  r = rd.randint(0,3)
+  if r==0:
+    T = Up(S)
+  if r==1:
+    T = Down(S)
+  if r==2:
+    T = Left(S)
+  if r==3:
+    T = Right(S)
+  if T!=None:
+    S = T
+
+def L2T(S):
+  return tuple([tuple(s) for s in S])
+
+def H(S):
+  dem = 0
+  for i in range(n):
+    for j in range(n):
+      if S[i][j]!=0 and S[i][j] != Goal[i][j]:
+        dem += 1
+  return dem
+
+Start = S
+
+from queue import PriorityQueue
+
+Open = PriorityQueue()
+Close = set()
+
+Open.put((0, (Start,None,None)))
+Close.add(L2T(Start))
+
+
+while not Open.empty():
+  f, X = Open.get()
+  S , Cha, me = X
+  if S == Goal:
+    DapAn = X
+    break
+  Children = [Up(S),Down(S),Left(S),Right(S)]
+  for i in range(len(Children)):
+    child = Children[i]
+    if child==None:
+      continue
+    if L2T(child) not in Close:
+      Open.put((f+1,(child,X,i)))
+      Close.add(L2T(child))
+
+print(DapAn)
+
+da = []
+while DapAn!=None:
+  a,b,c = DapAn
+  da.append((a,c))
+  DapAn = b
+
+da.reverse()
+for S,m in da:
+  print(m)
+  for s in S:
+    print(s)
