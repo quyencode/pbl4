@@ -97,6 +97,14 @@ def write_to_influx(data: dict[str, Any]) -> None:
         raise ValueError("payload does not match the sensor data contract")
 
     fields = {name: data.get(name) for name in SENSOR_FIELDS if data.get(name) is not None}
+    # InfluxDB cố định kiểu dữ liệu của từng field ngay lần ghi đầu tiên. ESP32 (ArduinoJson)
+    # gửi 78.0 thành 78 -> nếu ghi dạng số nguyên sẽ bị từ chối "field type conflict" và mất
+    # cả bản ghi. Vì vậy luôn ép các field số thực về float, co2 về int.
+    for name in FLOAT_FIELDS:
+        if name in fields:
+            fields[name] = float(fields[name])
+    if "co2" in fields:
+        fields["co2"] = int(fields["co2"])
     if not fields:
         raise ValueError("payload has no non-null sensor values to store")
 
