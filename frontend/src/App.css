@@ -40,7 +40,7 @@ body {
 .shell {
   position: relative;
   z-index: 1;
-  max-width: 880px;
+  max-width: 1120px;
   margin: 0 auto;
   padding: 36px 24px 56px;
   display: flex;
@@ -123,20 +123,36 @@ body {
   font-size: 12px;
 }
 
-.aqi-ring-wrap {
+/* ---------- Bố cục L1: AQI bên trái + lưới 6 ô ---------- */
+.card {
+  background: #fff;
+  border-radius: 22px;
+  padding: 20px 22px;
+  box-shadow: 0 6px 18px rgba(77, 124, 15, 0.1);
+  min-width: 0;
+}
+
+.overview {
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  gap: 20px;
+}
+
+.aqi-panel {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 10px;
-  margin: 4px 0;
+  justify-content: center;
+  gap: 14px;
+  text-align: center;
 }
 
 .aqi-ring {
-  width: 200px;
-  height: 200px;
+  width: 190px;
+  height: 190px;
   border-radius: 999px;
   background: #fff;
-  box-shadow: 0 16px 40px rgba(77, 124, 15, 0.2);
+  box-shadow: 0 14px 34px rgba(77, 124, 15, 0.18);
   border: 6px solid #fef08a;
   display: flex;
   flex-direction: column;
@@ -146,89 +162,113 @@ body {
 
 .aqi-ring-value {
   font-family: "Comfortaa", system-ui, sans-serif;
-  font-size: 48px;
+  font-size: 50px;
   font-weight: 700;
-  color: #166534;
+  line-height: 1;
+  color: #14532d;
 }
 
 .aqi-ring-label {
   font-size: 13px;
-  color: #65a30d;
-  margin-top: 4px;
+  color: #4d7c0f;
+  margin-top: 6px;
 }
 
-.aqi-ring-hint {
-  max-width: 320px;
-  text-align: center;
-  font-size: 12px;
-  color: #b45309;
+.aqi-level {
+  display: inline-block;
+  border-radius: 999px;
+  padding: 4px 14px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.aqi-advice {
   margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: #3f6212;
 }
 
-.mini-stat-row {
+.metric-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 14px;
+  align-content: start;
 }
 
-.mini-stat {
-  background: #fff;
-  border-radius: 20px;
-  padding: 14px 22px;
+.metric-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.metric-card--forecast { background: #fefce8; }
+
+.metric-head {
   display: flex;
   align-items: center;
-  gap: 10px;
-  box-shadow: 0 6px 16px rgba(77, 124, 15, 0.1);
+  gap: 8px;
 }
 
-.mini-stat-icon { font-size: 20px; }
-
-.mini-stat-note {
-  font-size: 10px;
-  color: #b45309;
-  margin-top: 2px;
+.metric-label {
+  font-size: 12px;
+  color: #4d7c0f;
 }
+.metric-card--forecast .metric-label { color: #a16207; }
 
-.card.chart-card h2.chart-title--climate { color: #0369a1; }
-
-.mini-stat-label {
-  font-size: 11px;
-  color: #65a30d;
-}
-
-.mini-stat-value {
+.metric-value {
   font-family: "Comfortaa", system-ui, sans-serif;
-  font-size: 18px;
+  font-size: 26px;
   font-weight: 700;
-  color: #166534;
+  color: #14532d;
 }
 
-.card.chart-card {
-  background: #fff;
-  border-radius: 24px;
-  padding: 22px 26px;
-  box-shadow: 0 6px 20px rgba(77, 124, 15, 0.1);
+.metric-unit {
+  font-size: 12px;
+  font-weight: 500;
+  color: #4d7c0f;
+  margin-left: 4px;
 }
 
-.card.chart-card h2 {
+.metric-note {
+  font-size: 11px;
+  color: #a16207;
+}
+
+.chart-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.chart-card h2 {
   font-family: "Comfortaa", system-ui, sans-serif;
   font-size: 15px;
   font-weight: 700;
-  margin: 0 0 14px;
-  color: #4d7c0f;
+  color: #3f6212;
+  margin: 0 0 12px;
+}
+.chart-card h2.chart-title--climate { color: #0369a1; }
+.chart-card h2.chart-title--forecast { color: #a16207; }
+
+.empty-text code {
+  background: rgba(0, 0, 0, 0.06);
+  padding: 1px 6px;
+  border-radius: 6px;
 }
 
-.card.chart-card h2.chart-title--forecast {
-  color: #ca8a04;
+@media (max-width: 900px) {
+  .overview,
+  .chart-row { grid-template-columns: 1fr; }
 }
 
 @media (max-width: 560px) {
   .shell { padding: 24px 14px 40px; }
   .app-header { flex-direction: column; align-items: stretch; }
   .status-pill { align-self: flex-start; }
+  .metric-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .card { padding: 16px; }
   .aqi-ring { width: 160px; height: 160px; }
-  .aqi-ring-value { font-size: 38px; }
-  .mini-stat { padding: 12px 16px; }
-  .mini-stat-row { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
-  .card.chart-card { padding: 18px 16px; }
+  .aqi-ring-value { font-size: 40px; }
+  .metric-value { font-size: 22px; }
 }
