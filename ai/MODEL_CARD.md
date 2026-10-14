@@ -9,47 +9,66 @@
 - Loại bài toán: hồi quy chuỗi thời gian đa bước (multi-step time series regression)
 
 ## 2. Dữ liệu
-- Nguồn dữ liệu: ...
-- Khoảng thời gian thu thập: ... đến ...
-- Số lượng bản ghi: ...
-- Tần suất lấy mẫu gốc: mỗi 5 phút → resample về 1 giờ/điểm
+- Nguồn dữ liệu: **dữ liệu mô phỏng** `ai/data/mock_readings.csv` (sinh bằng `ai/generate_mock_data.py`).
+  Node thật chưa thu đủ dữ liệu nên lần huấn luyện v1 này chưa dùng số đo thật; sẽ huấn luyện lại khi có.
+- Khoảng thời gian (mô phỏng): 24/08/2026 đến 22/09/2026 (30 ngày)
+- Số lượng bản ghi: 720 (1 bản ghi/giờ)
+- Tần suất lấy mẫu: dữ liệu mô phỏng đã ở mức 1 giờ/điểm; dữ liệu thật từ node (5 phút/lần) sẽ được resample về 1 giờ/điểm
 - Tỉ lệ chia tập: Train 70% / Validation 15% / Test 15%
 
 ## 3. Kiến trúc mô hình
-- Loại mô hình: LSTM / CNN-LSTM (chọn một, ghi rõ lý do)
-- Số layer, số unit: ...
+- Loại mô hình: LSTM (v1). CNN-LSTM sẽ thử ở Task C7.1 để so sánh.
+- Số layer, số unit: LSTM(64, return_sequences) → LSTM(32) → Dense(32) → Dense(24)
+- Số đặc trưng đầu vào: 5 (PM2.5, PM10, CO2, nhiệt độ, độ ẩm), chuẩn hoá MinMax 0–1
 - Window size (đầu vào): 24 bước
 - Horizon (đầu ra): 24 bước
 - Optimizer / Loss: Adam / MSE
-- Số epoch huấn luyện thực tế: ...
+- Số epoch huấn luyện thực tế: 50 (khoảng 15–20 giây trên CPU)
+- File mô hình: `model/lstm_model.keras` (tạo bởi `train_model.py --model_type lstm`)
 
 ## 4. Kết quả đánh giá (tập Test)
 
-## 4. Kết quả đánh giá (tập Test)
-
-| Model | MAE | RMSE | MAPE (%) |
+| Mô hình | MAE (µg/m³) | RMSE (µg/m³) | MAPE (%) |
 |---|---|---|---|
 | **Baseline (Persistence)** | 8.66 | 10.77 | 26.96% |
 | **LSTM** | 8.34 | 9.73 | 29.10% |
 
-- **Thời gian huấn luyện:** 50 epochs (khoảng 15-20 giây).
-- **Đánh giá hiệu năng:** Mô hình LSTM đạt chỉ số **MAE = 8.34** và **RMSE = 9.73**, thấp hơn đáng kể so với mô hình Baseline (Persistence) (**MAE = 8.66**, **RMSE = 10.77**). Điều này chứng minh mô hình LSTM đã học được chuỗi biểu đồ thời gian và đưa ra dự báo chính xác hơn so với phương pháp gán giá trị cũ.
+- **Thời gian huấn luyện:** 50 epochs (khoảng 15–20 giây).
+- **Đánh giá:** LSTM tốt hơn baseline Persistence một chút về MAE (8.34 so với 8.66, giảm ~4%)
+  và RMSE (9.73 so với 10.77, giảm ~10%), nhưng **kém hơn về MAPE** (29.10% so với 26.96%).
+  Nghĩa là LSTM giảm được các sai số lớn, nhưng chưa vượt trội rõ rệt so với cách đơn giản
+  "lấy giá trị đo gần nhất".
+- **Nguyên nhân nghi ngờ:** tập dữ liệu nhỏ (720 giờ, sau khi chia chỉ ~100 cửa sổ test) và là
+  dữ liệu mô phỏng có quy luật lặp theo ngày, nên chưa đủ để đánh giá chắc chắn. Cần huấn luyện
+  và đánh giá lại trên dữ liệu thật từ node.
 
 ## 5. Công thức tính AQI từ PM2.5 (nếu áp dụng)
-- Ghi rõ công thức/breakpoints sử dụng (vd: theo chuẩn US EPA) để Backend và
-  Dashboard hiển thị nhất quán.
+- Theo bảng breakpoint PM2.5 của **US EPA (cập nhật 2024)**, cài đặt ở `backend/app/aqi.py`
+  (bản sao `ai/aqi.py` dùng cho điểm dự báo), nên Backend, AI và Dashboard hiển thị cùng một số.
+- Công thức nội suy tuyến tính: AQI = (I_hi − I_lo) / (C_hi − C_lo) × (C − C_lo) + I_lo
+
+| PM2.5 (µg/m³) | AQI | Mức |
+|---|---|---|
+| 0.0 – 9.0 | 0 – 50 | Tốt |
+| 9.1 – 35.4 | 51 – 100 | Trung bình |
+| 35.5 – 55.4 | 101 – 150 | Kém (nhóm nhạy cảm) |
+| 55.5 – 125.4 | 151 – 200 | Xấu |
+| 125.5 – 225.4 | 201 – 300 | Rất xấu |
+| 225.5 – 325.4 | 301 – 500 | Nguy hại |
 
 ## 6. Giới hạn của mô hình
 - Dự báo chỉ đáng tin trong phạm vi dữ liệu huấn luyện đã thấy (không ngoại suy tốt
   cho điều kiện bất thường, ví dụ cháy rừng, pháo hoa...).
 - Cần dữ liệu lịch sử tối thiểu 24 giờ liên tục để dự báo được.
-- ...
+- Bản v1 mới huấn luyện trên dữ liệu mô phỏng, chưa phản ánh đúng biến động thật của không khí.
+- CO2 trong dữ liệu là giá trị mô phỏng (nhóm chưa có cảm biến MH-Z19B).
 
 ## 7. Kế hoạch cải thiện
 - Thu thập dữ liệu dài hạn hơn
 - Bổ sung dữ liệu khí tượng từ nguồn mở
 - Thử nghiệm thêm kiến trúc Transformer/Attention nếu có thời gian
-## Task4loi Thống kê và đánh giá chất lượng dữ liệu (Dataset Quality)
+
+## 8. Thống kê và đánh giá chất lượng dữ liệu (Task C4.2, trên dữ liệu mô phỏng)
 - **Tổng số mẫu (Records):** 720 dòng dữ liệu liên tục (`RangeIndex: 720 entries`).
 - **Các đặc trưng (Features):** `device_id`, `timestamp`, `temperature`, `humidity`, `pm25`, `pm10`, `co2`.
 - **Tỷ lệ thiếu dữ liệu (Missing Values):**
@@ -62,116 +81,4 @@
   - **Humidity:** Min = 55.90%, Max = 88.80%, Mean = 71.95%
   - **PM2.5:** Min = 16.80 µg/m³, Max = 64.20 µg/m³, Mean = 38.04 µg/m³
   - **PM10:** Min = 24.10 µg/m³, Max = 102.10 µg/m³, Mean = 59.03 µg/m³
-  - **CO2:** Min = 441.00 ppm, Max = 609.00 ppm, Mean = 500.39 ppm#Xây dựng trò chơi 8 số n x n = 3 x 3
-n = 3
-Goal = [[(i*n+j+1)%(n*n) for j in range(n)] for i in range(n)]
-import random as rd
-
-def ZeroP(S):
-  for i in range(n):
-    for j in range(n):
-      if S[i][j] == 0:
-        return i,j
-
-def Up(S):
-  T = [s[:] for s in S]
-  i,j = ZeroP(T)
-  if i==n-1:
-    return None
-  else:
-    T[i][j],T[i+1][j] = T[i+1][j],T[i][j]
-    return T
-
-def Down(S):
-  T = [s[:] for s in S]
-  i,j = ZeroP(T)
-  if i==0:
-    return None
-  else:
-    T[i][j],T[i-1][j] = T[i-1][j],T[i][j]
-    return T
-
-def Left(S):
-  T = [s[:] for s in S]
-  i,j = ZeroP(T)
-  if j==n-1:
-    return None
-  else:
-    T[i][j],T[i][j+1] = T[i][j+1],T[i][j]
-    return T
-
-def Right(S):
-  T = [s[:] for s in S]
-  i,j = ZeroP(T)
-  if j==0:
-    return None
-  else:
-    T[i][j],T[i][j-1] = T[i][j-1],T[i][j]
-    return T
-
-
-S = Goal
-for i in range(2000):
-  i,j = ZeroP(S)
-  r = rd.randint(0,3)
-  if r==0:
-    T = Up(S)
-  if r==1:
-    T = Down(S)
-  if r==2:
-    T = Left(S)
-  if r==3:
-    T = Right(S)
-  if T!=None:
-    S = T
-
-def L2T(S):
-  return tuple([tuple(s) for s in S])
-
-def H(S):
-  dem = 0
-  for i in range(n):
-    for j in range(n):
-      if S[i][j]!=0 and S[i][j] != Goal[i][j]:
-        dem += 1
-  return dem
-
-Start = S
-
-from queue import PriorityQueue
-
-Open = PriorityQueue()
-Close = set()
-
-Open.put((0, (Start,None,None)))
-Close.add(L2T(Start))
-
-
-while not Open.empty():
-  f, X = Open.get()
-  S , Cha, me = X
-  if S == Goal:
-    DapAn = X
-    break
-  Children = [Up(S),Down(S),Left(S),Right(S)]
-  for i in range(len(Children)):
-    child = Children[i]
-    if child==None:
-      continue
-    if L2T(child) not in Close:
-      Open.put((f+1,(child,X,i)))
-      Close.add(L2T(child))
-
-print(DapAn)
-
-da = []
-while DapAn!=None:
-  a,b,c = DapAn
-  da.append((a,c))
-  DapAn = b
-
-da.reverse()
-for S,m in da:
-  print(m)
-  for s in S:
-    print(s)
+  - **CO2:** Min = 441.00 ppm, Max = 609.00 ppm, Mean = 500.39 ppm
