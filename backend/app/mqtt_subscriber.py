@@ -7,7 +7,7 @@ import math
 import os
 from datetime import datetime, timezone
 from threading import Event
-from typing import Any
+from typing import Any, Callable, Optional
 
 import paho.mqtt.client as mqtt
 from influxdb_client import InfluxDBClient, Point
@@ -30,6 +30,16 @@ FLOAT_FIELDS = ("pm25", "pm10", "temperature", "humidity")
 
 _influx_client = InfluxDBClient(url=INFLUXDB_URL, token=INFLUXDB_TOKEN, org=INFLUXDB_ORG)
 _write_api = _influx_client.write_api(write_options=SYNCHRONOUS)
+
+# Hàm được gọi sau mỗi lần ghi InfluxDB thành công (main.py dùng để đẩy WebSocket).
+# Chạy trên thread của paho-mqtt, nên hàm đăng ký vào đây không được block lâu.
+_reading_listener: Optional[Callable[[dict[str, Any]], None]] = None
+
+
+def set_reading_listener(listener: Optional[Callable[[dict[str, Any]], None]]) -> None:
+    """Đăng ký hàm nhận mỗi bản ghi vừa lưu (None để huỷ đăng ký)."""
+    global _reading_listener
+    _reading_listener = listener
 
 
 def _parse_timestamp(value: Any) -> datetime | None:
@@ -149,6 +159,14 @@ def on_message(client: mqtt.Client, userdata: Any, msg: Any) -> None:
         logger.exception("Failed to write sensor payload from %s to InfluxDB", data["device_id"])
         return
     logger.info("Stored sensor reading for %s", data["device_id"])
+
+    listener = _reading_listener
+    if listener is not None:
+        try:
+            listener(data)
+        except Exception:
+            # Lỗi đẩy realtime không được làm mất dữ liệu đã ghi
+            logger.exception("Reading listener failed for %s", data["device_id"])
 
 
 def start_mqtt_listener() -> mqtt.Client:

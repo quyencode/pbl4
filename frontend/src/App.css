@@ -166,10 +166,9 @@ body {
 }
 
 .mini-stat-row {
-  display: flex;
-  justify-content: center;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
   gap: 14px;
-  flex-wrap: wrap;
 }
 
 .mini-stat {
@@ -183,6 +182,14 @@ body {
 }
 
 .mini-stat-icon { font-size: 20px; }
+
+.mini-stat-note {
+  font-size: 10px;
+  color: #b45309;
+  margin-top: 2px;
+}
+
+.card.chart-card h2.chart-title--climate { color: #0369a1; }
 
 .mini-stat-label {
   font-size: 11px;
@@ -222,5 +229,6 @@ body {
   .aqi-ring { width: 160px; height: 160px; }
   .aqi-ring-value { font-size: 38px; }
   .mini-stat { padding: 12px 16px; }
+  .mini-stat-row { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
   .card.chart-card { padding: 18px 16px; }
 }

@@ -6,6 +6,7 @@ Tài liệu API tự sinh tại: http://localhost:8000/docs
 Các endpoint dưới đây khớp với iot/mqtt_data_contract.md - KHÔNG đổi
 định dạng field mà không cập nhật lại contract và báo cả nhóm.
 """
+import asyncio
 import json
 import logging
 from datetime import datetime, timezone
@@ -27,9 +28,12 @@ from app.mqtt_subscriber import (
     INFLUXDB_ORG,
     INFLUXDB_TOKEN,
     INFLUXDB_URL,
+    _parse_timestamp,
+    set_reading_listener,
     stop_mqtt_listener,
     start_mqtt_listener,
 )
+from app.aqi import pm25_to_aqi
 from app import postgres_db
 
 logger = logging.getLogger(__name__)
@@ -53,14 +57,27 @@ active_connections: List[WebSocket] = []
 
 
 @app.on_event("startup")
-def on_startup():
+async def on_startup():
     # Bật MQTT subscriber chạy nền cùng lúc với API
     global _mqtt_client
+    loop = asyncio.get_running_loop()
+
+    def forward_to_websocket(data: dict) -> None:
+        # Được gọi từ thread paho-mqtt -> chuyển sang event loop của FastAPI
+        try:
+            reading = _reading_from_payload(data)
+        except Exception:
+            logger.exception("Cannot build realtime reading from payload %r", data)
+            return
+        asyncio.run_coroutine_threadsafe(broadcast_reading(reading), loop)
+
+    set_reading_listener(forward_to_websocket)
     _mqtt_client = start_mqtt_listener()
 
 
 @app.on_event("shutdown")
 def on_shutdown():
+    set_reading_listener(None)
     stop_mqtt_listener(_mqtt_client)
     _influx_client.close()
 
@@ -131,14 +148,31 @@ def _flux_time(value: datetime) -> str:
 
 
 def _reading_from_record(values: dict) -> SensorReading:
+    pm25 = values.get("pm25")
     return SensorReading(
         device_id=values["device_id"],
         timestamp=values.get("_time"),
-        pm25=values.get("pm25"),
+        pm25=pm25,
         pm10=values.get("pm10"),
         co2=values.get("co2"),
         temperature=values.get("temperature"),
         humidity=values.get("humidity"),
+        aqi=pm25_to_aqi(pm25),
+    )
+
+
+def _reading_from_payload(data: dict) -> SensorReading:
+    """Dựng SensorReading từ payload MQTT vừa ghi, cùng định dạng 1 item của /api/readings."""
+    pm25 = data.get("pm25")
+    return SensorReading(
+        device_id=data["device_id"].strip(),
+        timestamp=_parse_timestamp(data.get("timestamp")) or datetime.now(timezone.utc),
+        pm25=pm25,
+        pm10=data.get("pm10"),
+        co2=data.get("co2"),
+        temperature=data.get("temperature"),
+        humidity=data.get("humidity"),
+        aqi=pm25_to_aqi(pm25),
     )
 
 
@@ -183,22 +217,27 @@ def set_alert_config(config: AlertConfig):
 
 @app.websocket("/ws/live")
 async def websocket_live(websocket: WebSocket):
-    """Đẩy dữ liệu realtime cho Dashboard. Gọi broadcast_reading() từ
-    mqtt_subscriber khi có dữ liệu mới (cần nối thêm event loop / queue)."""
+    """Đẩy dữ liệu realtime cho Dashboard. mqtt_subscriber gọi broadcast_reading()
+    (qua on_startup) ngay sau mỗi lần ghi InfluxDB thành công."""
     await websocket.accept()
     active_connections.append(websocket)
     try:
         while True:
             await websocket.receive_text()  # giữ kết nối; client không cần gửi gì
     except WebSocketDisconnect:
-        active_connections.remove(websocket)
+        pass
+    finally:
+        if websocket in active_connections:
+            active_connections.remove(websocket)
 
 
 async def broadcast_reading(reading: SensorReading):
-    """TODO: gọi hàm này từ mqtt_subscriber (qua asyncio queue) mỗi khi có
-    dữ liệu mới, để đẩy realtime tới mọi client đang mở dashboard."""
+    """Gửi 1 bản ghi mới tới mọi Dashboard đang mở /ws/live."""
+    # mode="json" để datetime thành chuỗi ISO-8601 (send_json không tự đổi được)
+    message = reading.model_dump(mode="json")
     for connection in list(active_connections):
         try:
-            await connection.send_json(reading.dict())
+            await connection.send_json(message)
         except Exception:
-            active_connections.remove(connection)
+            if connection in active_connections:
+                active_connections.remove(connection)

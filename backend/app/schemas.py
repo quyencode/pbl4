@@ -14,6 +14,8 @@ class SensorReading(BaseModel):
     temperature: Optional[float] = None
     humidity: Optional[float] = None
     timestamp: Optional[datetime] = None
+    # Backend tự tính từ pm25 (US EPA) - node không gửi trường này, xem app/aqi.py
+    aqi: Optional[int] = None
 
 
 class ReadingsResponse(BaseModel):
