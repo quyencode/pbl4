@@ -13,7 +13,7 @@ BACKEND_API_BASE_URL = os.getenv("BACKEND_API_BASE_URL", "http://localhost:8000"
 def fetch_readings(device_id: str, from_: str = None, to: str = None, limit: int = 5000) -> pd.DataFrame:
     params = {"device_id": device_id, "limit": limit}
     if from_:
-        params["from_"] = from_
+        params["from"] = from_  # Backend nhận tham số tên "from"
     if to:
         params["to"] = to
 

@@ -58,10 +58,14 @@ Response:
 {
   "device_id": "node-01",
   "items": [
-    {"timestamp": "2026-09-22T09:30:00", "pm25": 42.5, "pm10": 68.0, "co2": 620, "temperature": 29.4, "humidity": 71}
+    {"timestamp": "2026-09-22T09:30:00", "pm25": 42.5, "pm10": 68.0, "co2": 620, "temperature": 29.4, "humidity": 71, "aqi": 117}
   ]
 }
 ```
+
+`aqi` do Backend tự tính từ `pm25` theo bảng breakpoint US EPA (2024), xem `backend/app/aqi.py`.
+Node **không** gửi trường này qua MQTT. `aqi` là `null` khi bản ghi không có `pm25`.
+Mỗi message của `WS /ws/live` có đúng định dạng 1 item ở trên (kèm `device_id`).
 
 ### 2.2. `GET /api/readings/latest`
 Trả về bản ghi mới nhất của mọi node — dùng cho màn hình chính của Dashboard.

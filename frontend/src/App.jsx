@@ -143,6 +143,10 @@ export default function App() {
 
         <section className="mini-stat-row">
           <StatCard icon="🌿" label="PM2.5 (µg/m³)" value={formatNumber(latest?.pm25, 1)} />
+          <StatCard icon="🌫️" label="PM10 (µg/m³)" value={formatNumber(latest?.pm10, 1)} />
+          <StatCard icon="🌡️" label="Nhiệt độ (°C)" value={formatNumber(latest?.temperature, 1)} />
+          <StatCard icon="💧" label="Độ ẩm (%)" value={formatNumber(latest?.humidity, 0)} />
+          <StatCard icon="🫧" label="CO₂ (ppm)" value={formatNumber(latest?.co2, 0)} note="mô phỏng" />
           <StatCard
             icon={isLive ? "✅" : "⏳"}
             label="Trạng thái"
@@ -151,15 +155,32 @@ export default function App() {
         </section>
 
         <section className="card chart-card">
-          <h2>Xu hướng tuần này (AQI / PM2.5)</h2>
+          <h2>Bụi mịn gần đây (PM2.5 / PM10)</h2>
           <ResponsiveContainer width="100%" height={300}>
             <LineChart data={history}>
               <CartesianGrid strokeDasharray="3 3" stroke="#eef2ea" />
               <XAxis dataKey="timestamp" hide />
               <YAxis stroke="#84a06a" />
-              <Tooltip contentStyle={{ borderRadius: 14, border: "1px solid #ecfccb" }} />
+              <Tooltip labelFormatter={formatTime} contentStyle={{ borderRadius: 14, border: "1px solid #ecfccb" }} />
               <Legend />
-              <Line type="monotone" dataKey="pm25" name="PM2.5 thực tế" stroke="#65a30d" strokeWidth={3} dot={false} />
+              <Line type="monotone" dataKey="pm25" name="PM2.5 (µg/m³)" stroke="#65a30d" strokeWidth={3} dot={false} />
+              <Line type="monotone" dataKey="pm10" name="PM10 (µg/m³)" stroke="#a3a3a3" strokeWidth={2} dot={false} />
+            </LineChart>
+          </ResponsiveContainer>
+        </section>
+
+        <section className="card chart-card">
+          <h2 className="chart-title--climate">Nhiệt độ &amp; Độ ẩm gần đây</h2>
+          <ResponsiveContainer width="100%" height={260}>
+            <LineChart data={history}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#eef2ea" />
+              <XAxis dataKey="timestamp" hide />
+              <YAxis yAxisId="temp" stroke="#ea580c" unit="°C" width={52} />
+              <YAxis yAxisId="hum" orientation="right" stroke="#0284c7" unit="%" width={48} domain={[0, 100]} />
+              <Tooltip labelFormatter={formatTime} contentStyle={{ borderRadius: 14, border: "1px solid #e0f2fe" }} />
+              <Legend />
+              <Line yAxisId="temp" type="monotone" dataKey="temperature" name="Nhiệt độ (°C)" stroke="#ea580c" strokeWidth={2.5} dot={false} />
+              <Line yAxisId="hum" type="monotone" dataKey="humidity" name="Độ ẩm (%)" stroke="#0284c7" strokeWidth={2.5} dot={false} />
             </LineChart>
           </ResponsiveContainer>
         </section>
@@ -172,7 +193,7 @@ export default function App() {
                 <CartesianGrid strokeDasharray="3 3" stroke="#eef2ea" />
                 <XAxis dataKey="timestamp" hide />
                 <YAxis stroke="#84a06a" />
-                <Tooltip contentStyle={{ borderRadius: 14, border: "1px solid #fef3c7" }} />
+                <Tooltip labelFormatter={formatTime} contentStyle={{ borderRadius: 14, border: "1px solid #fef3c7" }} />
                 <Legend />
                 <Line type="monotone" dataKey="pm25" name="PM2.5 dự báo" stroke="#eab308" strokeWidth={3} strokeDasharray="7 5" dot={false} />
               </LineChart>
@@ -186,14 +207,23 @@ export default function App() {
   );
 }
 
-function StatCard({ icon, label, value }) {
+function StatCard({ icon, label, value, note }) {
   return (
     <div className="mini-stat">
       <span className="mini-stat-icon">{icon}</span>
       <div>
         <div className="mini-stat-label">{label}</div>
         <div className="mini-stat-value">{value}</div>
+        {note && <div className="mini-stat-note">{note}</div>}
       </div>
     </div>
   );
+}
+
+// Hiển thị thời điểm trong tooltip biểu đồ theo giờ Việt Nam, ví dụ "16:45 14/10"
+function formatTime(value) {
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return String(value);
+  return date.toLocaleString("vi-VN", { hour: "2-digit", minute: "2-digit", day: "2-digit", month: "2-digit" });
 }
