@@ -286,7 +286,7 @@ ai/requirements.txt
 ### Kiểm tra
 
 - [x] Cả nhóm xem và đồng ý wireframe trước khi code
-- [ ] Wireframe thể hiện đủ các phần dữ liệu backend sẽ cung cấp (theo data contract)
+- [x] Wireframe thể hiện đủ các phần dữ liệu backend sẽ cung cấp (theo data contract)
 
 ---
 
@@ -317,26 +317,26 @@ frontend/src/App.jsx
 # 4.6. ✅ CHECKPOINT CUỐI TUẦN 1
 
 ## Đạt
-- [ ] Sơ đồ đấu nối hoàn chỉnh
-- [ ] Môi trường Arduino/PlatformIO chạy được
-- [ ] Board kết nối Wi-Fi thành công
+- [x] Sơ đồ đấu nối hoàn chỉnh
+- [x] Môi trường Arduino/PlatformIO chạy được
+- [x] Board kết nối Wi-Fi thành công
 
 ## Bình
 - [x] Docker compose chạy đủ 3 service
-- [ ] Schema PostgreSQL khởi tạo thành công
+- [x] Schema PostgreSQL khởi tạo thành công
 - [x] Test MQTT pub/sub thủ công thành công
 
 ## Lợi
-- [ ] Có dữ liệu mock hợp lệ (30 ngày)
-- [ ] Môi trường Python AI chạy đủ thư viện
+- [x] Có dữ liệu mock hợp lệ (30 ngày)
+- [x] Môi trường Python AI chạy đủ thư viện
 
 ## Quyến
-- [ ] Wireframe được cả nhóm chốt
-- [ ] Project frontend chạy "Hello PBL4"
+- [x] Wireframe được cả nhóm chốt
+- [x] Project frontend chạy "Hello PBL4"
 
 ## Cả nhóm
-- [ ] `iot/mqtt_data_contract.md` hoàn chỉnh, mọi người đọc hiểu như nhau
-- [ ] Repository có đủ 4 branch `feature/*`
+- [x] `iot/mqtt_data_contract.md` hoàn chỉnh, mọi người đọc hiểu như nhau
+- [x] Repository có đủ 4 branch `feature/*`
 
 ```text
 week1-done
@@ -565,8 +565,8 @@ frontend/src/api.js
 - [ ] `clean_data()` + `resample_hourly()` chạy đúng trên mock data
 
 ## Quyến
-- [ ] Layout trang chính hoàn chỉnh
-- [ ] Dashboard hiển thị dữ liệu mock qua `api.js`
+- [x] Layout trang chính hoàn chỉnh
+- [x] Dashboard hiển thị dữ liệu mock qua `api.js`
 
 ```text
 week2-done
@@ -739,12 +739,12 @@ frontend/src/api.js
 
 ### Việc cần làm
 
-- [ ] Đổi `API_BASE_URL` sang backend thật (dev) của Bình
-- [ ] Xử lý lỗi khi API chưa sẵn sàng (hiển thị thông báo, không crash trắng trang)
+- [x] Đổi `API_BASE_URL` sang backend thật (dev) của Bình
+- [x] Xử lý lỗi khi API chưa sẵn sàng (hiển thị thông báo, không crash trắng trang)
 
 ### Kiểm tra
 
-- [ ] Tắt backend → dashboard vẫn hiển thị, chỉ báo lỗi kết nối, không crash
+- [x] Tắt backend → dashboard vẫn hiển thị, chỉ báo lỗi kết nối, không crash
 
 ---
 
@@ -758,13 +758,13 @@ frontend/src/App.jsx
 
 ### Việc cần làm
 
-- [ ] Vẽ `LineChart` (Recharts) cho PM2.5 theo thời gian
-- [ ] Format trục X gọn (ẩn nếu quá dày, theo code mẫu hiện tại)
+- [x] Vẽ `LineChart` (Recharts) cho PM2.5 theo thời gian
+- [x] Format trục X gọn (ẩn nếu quá dày, theo code mẫu hiện tại)
 
 ### Kiểm tra
 
-- [ ] Biểu đồ hiển thị đúng thứ tự thời gian, không bị đảo ngược
-- [ ] Không lỗi khi dữ liệu rỗng (mới bật hệ thống, chưa có lịch sử)
+- [x] Biểu đồ hiển thị đúng thứ tự thời gian, không bị đảo ngược
+- [x] Không lỗi khi dữ liệu rỗng (mới bật hệ thống, chưa có lịch sử)
 
 ---
 
@@ -782,7 +782,7 @@ frontend/src/App.jsx
 - [ ] `make_sliding_windows()` shape đúng
 
 ## Quyến
-- [ ] Dashboard vẽ được biểu đồ lịch sử từ API thật
+- [x] Dashboard vẽ được biểu đồ lịch sử từ API thật
 
 ```text
 week3-done
@@ -926,12 +926,12 @@ backend/app/main.py
 
 ### Việc cần làm
 
-- [ ] Gỡ toàn bộ dữ liệu giả lập tĩnh, chỉ dùng API thật
-- [ ] Thêm trạng thái loading khi đang tải dữ liệu
+- [x] Gỡ toàn bộ dữ liệu giả lập tĩnh, chỉ dùng API thật
+- [x] Thêm trạng thái loading khi đang tải dữ liệu
 
 ### Kiểm tra
 
-- [ ] Refresh trang nhiều lần đều lấy đúng dữ liệu mới nhất từ node thật
+- [x] Refresh trang nhiều lần đều lấy đúng dữ liệu mới nhất từ node thật
 
 ---
 
@@ -939,12 +939,12 @@ backend/app/main.py
 
 ### Việc cần làm
 
-- [ ] Nối `StatCard` với `getLatestReadings()`
-- [ ] Định dạng số liệu (làm tròn 1 chữ số thập phân)
+- [x] Nối `StatCard` với `getLatestReadings()`
+- [x] Định dạng số liệu (làm tròn 1 chữ số thập phân)
 
 ### Kiểm tra
 
-- [ ] Giá trị hiển thị khớp với dữ liệu mới nhất trên InfluxDB UI
+- [x] Giá trị hiển thị khớp với dữ liệu mới nhất trên InfluxDB UI
 
 ---
 
@@ -1132,12 +1132,12 @@ connectLiveSocket()
 
 ### Việc cần làm
 
-- [ ] Mở kết nối `/ws/live` khi load trang
-- [ ] Cập nhật `history`/`latest` khi nhận message mới (bỏ `TODO` hiện tại)
+- [x] Mở kết nối `/ws/live` khi load trang
+- [x] Cập nhật `history`/`latest` khi nhận message mới (bỏ `TODO` hiện tại)
 
 ### Kiểm tra
 
-- [ ] Khi node gửi dữ liệu mới, dashboard tự cập nhật không cần refresh trang
+- [x] Khi node gửi dữ liệu mới, dashboard tự cập nhật không cần refresh trang
 
 ---
 
@@ -1145,12 +1145,12 @@ connectLiveSocket()
 
 ### Việc cần làm
 
-- [ ] Tính trạng thái (Ổn định/Trung bình/Cảnh báo) dựa trên AQI/PM2.5 hiện tại
-- [ ] Gắn màu sắc tương ứng cho từng mức trạng thái
+- [x] Tính trạng thái (Ổn định/Trung bình/Cảnh báo) dựa trên AQI/PM2.5 hiện tại
+- [x] Gắn màu sắc tương ứng cho từng mức trạng thái
 
 ### Kiểm tra
 
-- [ ] Trạng thái đổi màu đúng khi thay đổi ngưỡng thử nghiệm
+- [x] Trạng thái đổi màu đúng khi thay đổi ngưỡng thử nghiệm
 
 ---
 
@@ -1168,8 +1168,8 @@ connectLiveSocket()
 - [ ] Có mô hình LSTM v1 với MAE/RMSE/MAPE ghi lại rõ ràng
 
 ## Quyến
-- [ ] Dashboard cập nhật realtime qua WebSocket
-- [ ] Hiển thị đúng trạng thái theo ngưỡng
+- [x] Dashboard cập nhật realtime qua WebSocket
+- [x] Hiển thị đúng trạng thái theo ngưỡng
 
 ```text
 week5-done
