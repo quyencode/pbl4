@@ -618,12 +618,12 @@ mqttClient.publish()
 
 ### Việc cần làm
 
-- [ ] Chạy node liên tục tối thiểu 30 phút, ghi log số message gửi thành công
-- [ ] Đối chiếu số message với số lần subscribe nhận được ở máy Bình
+- [x] Chạy node liên tục tối thiểu 30 phút, ghi log số message gửi thành công
+- [x] Đối chiếu số message với số lần subscribe nhận được ở máy Bình
 
 ### Kiểm tra
 
-- [ ] Số message gửi = số message Backend nhận (không thất thoát trong điều kiện mạng ổn định)
+- [x] Số message gửi = số message Backend nhận (không thất thoát trong điều kiện mạng ổn định)
 
 ---
 
@@ -815,14 +815,14 @@ chạy được xuyên suốt lần đầu tiên, dù còn thô.
 
 ### Việc cần làm
 
-- [ ] Đóng gói node vào hộp/case tạm, cấp nguồn ổn định
-- [ ] Đặt node ở vị trí thử nghiệm thực tế (phòng lab hoặc ngoài trời)
-- [ ] Sau khi PMS5003 về hàng: đấu nối theo `wiring_diagram.md`, xác nhận node tự chuyển từ mô phỏng sang đọc thật (xem log Serial "PM/PM10: that")
+- [x] Đóng gói node vào hộp/case tạm, cấp nguồn ổn định
+- [x] Đặt node ở vị trí thử nghiệm thực tế (phòng lab hoặc ngoài trời)
+- [x] Sau khi PMS5003 về hàng: đấu nối theo `wiring_diagram.md`, xác nhận node tự chuyển từ mô phỏng sang đọc thật (xem log Serial "PM/PM10: that")
 
 ### Kiểm tra
 
 - [ ] Node hoạt động liên tục 12 giờ không cần cắm lại máy tính
-- [ ] (Sau khi có PMS5003) dữ liệu PM2.5/PM10 gửi lên là số đo thật, không còn mô phỏng
+- [x] (Sau khi có PMS5003) dữ liệu PM2.5/PM10 gửi lên là số đo thật, không còn mô phỏng
 
 ---
 
@@ -843,12 +843,12 @@ flushBuffer()
 
 ### Việc cần làm
 
-- [ ] Lưu payload vào mảng vòng khi mất kết nối MQTT
-- [ ] Gửi bù toàn bộ buffer khi kết nối phục hồi
+- [x] Lưu payload vào mảng vòng khi mất kết nối MQTT
+- [x] Gửi bù toàn bộ buffer khi kết nối phục hồi
 
 ### Kiểm tra
 
-- [ ] Ngắt Wi-Fi 5 phút rồi bật lại → dữ liệu bị đệm được gửi bù đầy đủ, đúng thứ tự
+- [x] Ngắt Wi-Fi 5 phút rồi bật lại → dữ liệu bị đệm được gửi bù đầy đủ, đúng thứ tự
 
 ---
 
