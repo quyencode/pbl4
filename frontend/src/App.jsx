@@ -27,12 +27,35 @@ function formatNumber(value, digits = 1) {
   return Number(value).toFixed(digits);
 }
 
+// PostgreSQL lưu giờ dự báo dạng "không múi giờ" (thực chất là giờ UTC), ví dụ "2026-10-29T14:14:00".
+// Trình duyệt sẽ hiểu nhầm thành giờ Việt Nam (lệch 7 tiếng) -> chuỗi nào thiếu múi giờ thì coi là UTC.
+function toTime(value) {
+  if (value === null || value === undefined) return NaN;
+  if (typeof value === "string" && !/(z|[+-]\d{2}:?\d{2})$/i.test(value.trim())) {
+    return new Date(value.trim().replace(" ", "T") + "Z").getTime();
+  }
+  return new Date(value).getTime();
+}
+
+function normalizeForecast(f) {
+  if (!f) return f;
+  const iso = (v) => {
+    const t = toTime(v);
+    return Number.isNaN(t) ? v : new Date(t).toISOString();
+  };
+  return {
+    ...f,
+    generated_at: iso(f.generated_at),
+    predictions: (f.predictions || []).map((p) => ({ ...p, timestamp: iso(p.timestamp) })),
+  };
+}
+
 // Gộp số đo thô (30 giây/lần) thành trung bình theo giờ để vẽ cạnh dự báo (1 điểm/giờ)
 function hourlyAverage(readings) {
   const buckets = new Map();
   for (const r of readings) {
     if (r.pm25 === null || r.pm25 === undefined || !r.timestamp) continue;
-    const t = new Date(r.timestamp).getTime();
+    const t = toTime(r.timestamp);
     if (Number.isNaN(t)) continue;
     const key = Math.floor(t / HOUR_MS) * HOUR_MS;
     const b = buckets.get(key) || { sum: 0, n: 0 };
@@ -153,7 +176,7 @@ export default function App() {
       try {
         const f = await getLatestForecast(DEFAULT_DEVICE_ID);
         if (cancelled) return;
-        setForecast(f);
+        setForecast(normalizeForecast(f));
         setForecastIsMock(false);
       } catch {
         // Backend chưa chạy -> dùng dự báo mẫu để vẫn xem được biểu đồ
@@ -203,7 +226,7 @@ export default function App() {
       setNoRealDataYet(false);
       setHistory((prev) => [...prev.slice(-(MAX_HISTORY_POINTS - 1)), data]);
       const cutoff = Date.now() - 24 * HOUR_MS;
-      setRecent24h((prev) => [...prev.filter((r) => new Date(r.timestamp).getTime() >= cutoff), data]);
+      setRecent24h((prev) => [...prev.filter((r) => toTime(r.timestamp) >= cutoff), data]);
     });
     socket.onerror = () => {
       // Backend/WS chưa chạy -> bỏ qua, không phải lỗi hiển thị
@@ -279,7 +302,8 @@ export default function App() {
   const level = aqiLevel(latest?.aqi);
   const nowMs = Date.now();
   const nextForecast = forecast?.predictions?.find((p) => new Date(p.timestamp).getTime() > nowMs) || forecast?.predictions?.[0];
-  const series = useMemo(() => buildCombinedSeries(hourlyAverage(recent24h), forecast), [recent24h, forecast]);
+  const hourly = useMemo(() => hourlyAverage(recent24h), [recent24h]);
+  const series = useMemo(() => buildCombinedSeries(hourly, forecast), [hourly, forecast]);
   const forecastAt = forecast?.generated_at ? new Date(forecast.generated_at) : null;
   const forecastStale = forecastAt && nowMs - forecastAt.getTime() > FORECAST_STALE_MS;
   const bannerItems = testAlert ? [testAlert] : exceeded;
@@ -404,6 +428,9 @@ export default function App() {
             </ResponsiveContainer>
           ) : (
             <p className="empty-text">Chưa có dữ liệu 24 giờ qua và dự báo — chạy <code>ai/predict.py</code> để tạo dự báo đầu tiên.</p>
+          )}
+          {hourly.length === 0 && series.length > 0 && (
+            <p className="empty-text">Chưa có số đo nào trong 24 giờ qua (node đang tắt?) — biểu đồ chỉ hiển thị phần dự báo.</p>
           )}
           {!forecast && series.length > 0 && (
             <p className="empty-text">Chưa có dự báo cho node này — chạy <code>ai/predict.py</code> để tạo dự báo đầu tiên.</p>
