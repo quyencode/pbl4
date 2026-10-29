@@ -96,8 +96,63 @@ Cấu hình ngưỡng cảnh báo theo node/khu vực.
 ```
 
 ### 2.6. `WS /ws/live`
-WebSocket đẩy dữ liệu realtime; mỗi message có cùng cấu trúc với một item của
-`/api/readings`, kèm `device_id`.
+WebSocket đẩy dữ liệu realtime. Có 2 loại message:
+
+- **Số đo mới:** cùng cấu trúc với một item của `/api/readings`, kèm `device_id`.
+  **Không** có trường `type` (giữ nguyên như cũ, Dashboard cũ vẫn chạy).
+- **Cảnh báo mới:** có trường `"type": "alert"`, cấu trúc như mục 2.7.
+
+Dashboard phân biệt bằng trường `type`: có `"type": "alert"` thì là cảnh báo, không có thì là số đo.
+
+### 2.7. Cảnh báo vượt ngưỡng (chốt giữa Backend và Web)
+
+**Khi nào Backend sinh cảnh báo:** sau mỗi lần ghi số đo vào InfluxDB, so với ngưỡng của
+node trong `alert_configs` (mặc định `pm25_threshold = 55`, `aqi_threshold = 100`).
+
+- Sinh cảnh báo khi giá trị **vừa chuyển từ dưới ngưỡng lên ≥ ngưỡng** (không sinh lại ở
+  mỗi bản ghi khi vẫn đang vượt).
+- Nếu vẫn vượt ngưỡng liên tục thì nhắc lại tối đa **mỗi 10 phút** một lần.
+- `pm25` và `aqi` xét riêng, mỗi chỉ số một cảnh báo (`metric`).
+- Bản ghi có `pm25 = null` thì bỏ qua, không sinh cảnh báo.
+
+Mỗi cảnh báo được lưu 1 dòng vào bảng `alert_events` rồi đẩy qua `WS /ws/live`:
+
+```json
+{
+  "type": "alert",
+  "id": 12,
+  "device_id": "node-01",
+  "metric": "pm25",
+  "value": 62.0,
+  "threshold": 55.0,
+  "triggered_at": "2026-10-29T09:20:00+00:00"
+}
+```
+
+| Trường | Kiểu | Ghi chú |
+|---|---|---|
+| `type` | string | luôn là `"alert"` |
+| `id` | int | id dòng trong `alert_events` (Dashboard dùng để không hiện trùng) |
+| `device_id` | string | node bị vượt ngưỡng |
+| `metric` | string | `"pm25"` hoặc `"aqi"` |
+| `value` | float | giá trị đo được lúc vượt ngưỡng |
+| `threshold` | float | ngưỡng đang cấu hình lúc đó |
+| `triggered_at` | string | ISO-8601 có múi giờ (thời điểm của bản ghi gây cảnh báo) |
+
+### 2.8. `GET /api/alerts?device_id=&limit=`
+Danh sách cảnh báo gần nhất của một node, **mới nhất trước**; `limit` mặc định 20.
+
+```json
+{
+  "device_id": "node-01",
+  "items": [
+    {"id": 12, "device_id": "node-01", "metric": "pm25", "value": 62.0, "threshold": 55.0,
+     "triggered_at": "2026-10-29T09:20:00+00:00", "acknowledged": false}
+  ]
+}
+```
+
+Node chưa có cảnh báo nào thì trả `items: []` (không trả 404).
 
 ## 3. Quy ước chung
 
