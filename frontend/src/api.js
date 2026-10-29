@@ -30,3 +30,40 @@ export function connectLiveSocket(onMessage) {
   socket.onmessage = (event) => onMessage(JSON.parse(event.data));
   return socket;
 }
+
+// Lấy số đo từ một thời điểm trở đi (dùng cho biểu đồ 24 giờ qua + dự báo)
+export async function getReadingsSince(deviceId, fromDate, limit = 5000) {
+  const params = new URLSearchParams({ device_id: deviceId, from: fromDate.toISOString(), limit });
+  const res = await fetch(`${API_BASE_URL}/api/readings?${params}`);
+  if (!res.ok) throw new Error("Không lấy được dữ liệu 24 giờ qua");
+  return res.json();
+}
+
+// ---------- Cảnh báo (định dạng xem iot/mqtt_data_contract.md mục 2.7, 2.8) ----------
+
+// Trả null nếu Backend chưa có API này (404) để Dashboard tự phát hiện vượt ngưỡng thay thế
+export async function getAlerts(deviceId, limit = 20) {
+  const params = new URLSearchParams({ device_id: deviceId, limit });
+  const res = await fetch(`${API_BASE_URL}/api/alerts?${params}`);
+  if (res.status === 404) return null;
+  if (!res.ok) throw new Error("Không lấy được danh sách cảnh báo");
+  const data = await res.json();
+  return data.items || [];
+}
+
+export async function getAlertConfig(deviceId) {
+  const params = new URLSearchParams({ device_id: deviceId });
+  const res = await fetch(`${API_BASE_URL}/api/alerts/config?${params}`);
+  if (!res.ok) throw new Error("Không lấy được ngưỡng cảnh báo");
+  return res.json();
+}
+
+export async function saveAlertConfig(config) {
+  const res = await fetch(`${API_BASE_URL}/api/alerts/config`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(config),
+  });
+  if (!res.ok) throw new Error("Không lưu được ngưỡng cảnh báo");
+  return res.json();
+}

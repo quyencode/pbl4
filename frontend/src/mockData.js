@@ -21,3 +21,15 @@ export const MOCK_HISTORY = Array.from({ length: 24 }, (_, i) => {
     pm25: Math.round((25 + 15 * Math.sin(i / 4) + Math.random() * 5) * 10) / 10,
   };
 });
+
+// Dự báo mẫu 24 giờ tới (dùng khi backend chưa chạy, để xem trước biểu đồ thực tế + dự báo)
+export const MOCK_FORECAST = {
+  device_id: "node-01",
+  generated_at: new Date().toISOString(),
+  horizon_hours: 24,
+  predictions: Array.from({ length: 24 }, (_, i) => {
+    const t = new Date(Date.now() + (i + 1) * 60 * 60 * 1000);
+    const pm25 = Math.round((30 + 12 * Math.sin((i + 24) / 4)) * 10) / 10;
+    return { timestamp: t.toISOString(), pm25, aqi: null };
+  }),
+};

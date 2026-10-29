@@ -1193,33 +1193,78 @@ Lưu DB
 Hiển thị trên Dashboard
 ```
 
+> **Điều chỉnh sau buổi báo cáo tiến độ:** thầy nhận xét node **chưa có cảnh báo** và trông như
+> **linh kiện rời, chưa giống một thiết bị**. Vì vậy phần của Đạt tuần này đổi trọng tâm:
+> làm **cảnh báo tại chỗ (đèn + còi)** và **đóng hộp node**. Lắp node thứ 2 dời sang sau khi
+> node 1 hoàn chỉnh.
+
 ---
 
 # 9.1. 📡 ĐẠT – TUẦN 6
 
-## Task A6.1 – Lắp thêm node thứ 2 (nếu đủ điều kiện)
+## Task A6.1 – Cảnh báo tại chỗ: đèn + còi + nút tắt tiếng
+
+### File
+
+```text
+iot/esp32_sensor_node/esp32_sensor_node.ino
+iot/esp32_sensor_node/wiring_diagram.md
+iot/esp32_sensor_node/HUONG_DAN_CANH_BAO_VA_DONG_HOP.md
+```
+
+### Linh kiện mua thêm
+
+- 3 LED 5 mm (xanh, vàng, đỏ) + 3 điện trở 220 Ω
+- Còi chủ động (active buzzer) 5V + transistor NPN S8050/2N2222 + điện trở 1 kΩ
+- 1 nút nhấn (tắt tiếng)
 
 ### Việc cần làm
 
-- [ ] Lặp lại quy trình lắp đặt/hiệu chuẩn như node 1
-- [ ] Đặt `device_id = node-02`, đảm bảo không trùng node-01
+- [ ] Nối mạch: LED xanh/vàng/đỏ → GPIO18/19/23; còi → GPIO27 **qua transistor**; nút → GPIO13 và GND
+- [ ] Nạp firmware mới có phần cảnh báo (điền lại Wi-Fi, IP broker trước khi nạp)
+- [ ] Cập nhật `wiring_diagram.md` với các chân mới
+- [ ] Ngưỡng theo PM2.5 trung bình 2 phút (US EPA 2024, giống Backend):
+
+| PM2.5 (µg/m³) | Đèn | Còi |
+|---|---|---|
+| ≤ 35.4 | Xanh | Im |
+| 35.5 – 55.4 | Vàng | 1 tiếng khi vừa chuyển sang |
+| 55.5 – 125.4 | Đỏ | 3 tiếng khi vừa chuyển sang |
+| > 125.4 | Đỏ nháy | 3 tiếng, lặp lại mỗi 60 giây |
+| Cảm biến lỗi | Vàng nháy | Im |
+
+- [ ] Nút tắt tiếng: bấm → im 30 phút (LCD hiện `IM`), đèn vẫn chạy; ban đêm 22h–6h không kêu
 
 ### Kiểm tra
 
-- [ ] Backend nhận và phân biệt đúng dữ liệu 2 node riêng biệt
+- [ ] Cắm điện: sáng cả 3 đèn + kêu 1 tiếng (tự kiểm tra)
+- [ ] Đưa que nhang gần PMS5003: sau 1–2 phút đèn chuyển vàng → đỏ, còi kêu; Serial in `Mức cảnh báo: ...`
+- [ ] Bấm nút: còi im, LCD hiện `IM`, đèn đỏ vẫn sáng
+- [ ] Tắt Wi-Fi/broker: đèn và còi vẫn chạy, node không bị treo
+- [ ] Quay video demo (đèn đỏ + còi kêu) làm minh chứng
 
 ---
 
-## Task A6.2 – Giám sát ổn định 48 giờ
+## Task A6.2 – Đóng hộp node thành thiết bị hoàn chỉnh
 
 ### Việc cần làm
 
-- [ ] Theo dõi liên tục 48h, ghi log các lần mất kết nối/lỗi cảm biến
-- [ ] Tổng hợp báo cáo ổn định gửi cả nhóm
+- [ ] Mua hộp nhựa điện tử khoảng 150 × 100 × 70 mm, board đục lỗ hoặc breadboard mini, dây ngắn
+- [ ] Bố trí theo hình `bo_tri_hop_node.png`:
+  - Nắp: ô khoét LCD, 3 đèn, còi, nút tắt tiếng, nhãn "PBL4 · Node 01"
+  - Thành hộp: khoét lưới lỗ **đúng cửa hút và cửa xả của PMS5003**, cảm biến áp sát vào
+  - DHT11 cạnh lỗ thoáng, **xa ESP32** (tránh nhiệt); cổng USB đưa ra ngoài
+- [ ] Bỏ breadboard lớn, hàn/cắm gọn, bó dây bằng dây rút, cố định linh kiện
+- [ ] Sau khi đóng hộp: chạy node độc lập bằng sạc 5V **tối thiểu 12 giờ** (thay cho mục giám sát 48h nếu không kịp)
 
 ### Kiểm tra
 
-- [ ] Uptime node trong 48h đạt tối thiểu ~95% (ghi nhận số liệu thật, không làm tròn tuỳ tiện)
+- [ ] Số đo PM2.5 trong hộp không lệch bất thường so với lúc để ngoài (PMS5003 không bị bít)
+- [ ] Nhiệt độ DHT11 không cao hơn bất thường so với lúc chưa đóng hộp
+- [ ] Đếm bản ghi server lưu trong 12 giờ (≈ 1440 bản ghi ở chu kỳ 30 giây), ghi lại khoảng trống lớn nhất
+- [ ] Chụp ảnh node đã đóng hộp (mặt nắp + bên trong) cho báo cáo và slide
+
+> Task "Lắp thêm node thứ 2" dời lại, chỉ làm khi node 1 đã đóng hộp và chạy ổn định.
 
 ---
 
@@ -1236,8 +1281,8 @@ database/init_postgres.sql
 
 ### Việc cần làm
 
-- [ ] Thay lưu in-memory bằng ghi thật vào `forecast_runs` + `forecast_points`
-- [ ] Đảm bảo 1 lần `POST /api/forecasts` tạo đúng 1 `forecast_run` + N `forecast_points`
+- [x] Thay lưu in-memory bằng ghi thật vào `forecast_runs` + `forecast_points` (`postgres_db.save_forecast`)
+- [x] Đảm bảo 1 lần `POST /api/forecasts` tạo đúng 1 `forecast_run` + N `forecast_points`
 
 ### Kiểm tra
 
@@ -1249,7 +1294,8 @@ database/init_postgres.sql
 
 ### Việc cần làm
 
-- [ ] Đổi từ in-memory sang query PostgreSQL (lấy `forecast_run` mới nhất theo `device_id`)
+- [x] Đổi từ in-memory sang query PostgreSQL (lấy `forecast_run` mới nhất theo `device_id`, `postgres_db.get_latest_forecast`)
+- [ ] Trả 404 rõ ràng khi node chưa có dự báo (đã có, cần test cùng Quyến ở Task D6.2)
 
 ### Kiểm tra
 
@@ -1275,12 +1321,14 @@ run_once()
 
 ### Việc cần làm
 
-- [ ] Lấy dữ liệu gần nhất, chạy mô hình, gửi `POST /api/forecasts`
-- [ ] Lưu lại `scaler` đã fit lúc train (thay vì fit lại mỗi lần predict — xử lý `TODO` hiện tại)
+- [x] Lấy dữ liệu gần nhất, chạy mô hình, gửi `POST /api/forecasts` (bản hiện tại dùng mô hình đơn biến `ai/data/lstm_model.keras`, dự báo lặp 24 bước)
+- [ ] Chuyển sang mô hình **5 đặc trưng** đã đánh giá (`model/lstm_model.keras`, đầu vào 24 × 5, ra thẳng 24 giờ) để số liệu trong báo cáo khớp với mô hình đang chạy
+- [ ] `train_model.py` lưu `scaler.pkl` cùng mô hình; `predict.py` nạp đúng scaler đó thay vì fit lại
 
 ### Kiểm tra
 
-- [ ] Chạy `python predict.py --device_id node-01` thành công, Bình xác nhận nhận được dữ liệu
+- [ ] Chạy `py -3.12 ai/predict.py` với node-01 thành công, Bình xác nhận PostgreSQL có 1 `forecast_run` + 24 `forecast_points`
+- [ ] Kết quả dự báo trên tập test bằng mô hình mới vẫn khớp MAE 8.34 / RMSE 9.73 đã báo cáo
 
 ---
 
@@ -1334,14 +1382,14 @@ frontend/src/App.jsx
 # 9.5. ✅ CHECKPOINT CUỐI TUẦN 6
 
 ## Đạt
-- [ ] (Tuỳ điều kiện) Có 2 node hoạt động song song
-- [ ] Báo cáo ổn định 48h
+- [ ] Node có cảnh báo tại chỗ: 3 đèn + còi + nút tắt tiếng, có video demo
+- [ ] Node đã đóng hộp gọn, chạy độc lập ≥ 12 giờ, có ảnh minh chứng
 
 ## Bình
 - [ ] Forecast được lưu và đọc đúng từ PostgreSQL
 
 ## Lợi
-- [ ] `predict.py` chạy ổn định, tự động gửi dự báo
+- [ ] `predict.py` dùng mô hình 5 đặc trưng + `scaler.pkl`, chạy ổn định, tự động gửi dự báo
 
 ## Quyến
 - [ ] Dashboard hiển thị đầy đủ: dữ liệu thật + dự báo AI
@@ -1956,9 +2004,10 @@ week10-done / release-candidate
 
 | Test | Người | Pass condition |
 |---|---|---|
-| Node thứ 2 | Đạt | Backend phân biệt đúng 2 node |
+| Cảnh báo tại chỗ | Đạt | Thử bằng khói: đèn đổi màu + còi kêu đúng ngưỡng; nút tắt tiếng hoạt động |
+| Đóng hộp + chạy độc lập | Đạt | ≥ 12 giờ, số đo PM2.5 và nhiệt độ không lệch bất thường |
 | Forecast → DB | Bình | Số điểm khớp horizon_hours |
-| predict.py | Lợi | Chạy 24 lần không crash |
+| predict.py | Lợi | Dùng mô hình 5 đặc trưng + scaler.pkl, chạy 24 lần không crash |
 | Hiển thị dự báo | Quyến | Cập nhật đúng sau mỗi lần predict |
 
 ## Tuần 7
@@ -2203,9 +2252,9 @@ Quyến → Realtime UI
 API đầy đủ + Model v1
 
 TUẦN 6
-Đạt → Node 2 (nếu có) + giám sát 48h
+Đạt → Cảnh báo đèn + còi, đóng hộp node, chạy độc lập 12h
 Bình → Forecast lưu DB
-Lợi → predict.py tự động
+Lợi → predict.py dùng mô hình 5 đặc trưng + scaler, tự động
 Quyến → Hiển thị dự báo AI
         ↓
 AI tích hợp vào hệ thống
