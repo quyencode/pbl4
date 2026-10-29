@@ -416,7 +416,7 @@ export default function App() {
             <ResponsiveContainer width="100%" height={280}>
               <LineChart data={series}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#eef2ea" />
-                <XAxis dataKey="t" type="number" scale="time" domain={["dataMin", "dataMax"]} tickFormatter={formatHour} stroke="#84a06a" minTickGap={28} />
+                <XAxis dataKey="t" type="number" scale="time" domain={[(min) => Math.min(min, nowMs), "dataMax"]} tickFormatter={formatHour} stroke="#84a06a" minTickGap={28} />
                 <YAxis stroke="#84a06a" width={36} />
                 <Tooltip labelFormatter={formatTime} formatter={(v) => `${formatNumber(v, 1)} µg/m³`} contentStyle={{ borderRadius: 14, border: "1px solid #fef3c7" }} />
                 <Legend />
