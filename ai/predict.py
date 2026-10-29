@@ -34,7 +34,7 @@ TRAINING_DATA_PATH = os.getenv("TRAINING_DATA_PATH", os.path.join(AI_DIR, "data"
 FEATURE_COLS = FEATURE_COLUMNS
 TARGET_COL = "pm25"
 WINDOW_SIZE = 24  # Số giờ lịch sử mô hình cần (24 bước thời gian)
-FETCH_LIMIT = int(os.getenv("PREDICT_FETCH_LIMIT", 2000))
+FETCH_LIMIT = int(os.getenv("PREDICT_FETCH_LIMIT", 5000))  # 30 giây/bản ghi: 5000 ≈ 42 giờ, đủ cửa sổ 24 giờ
 
 
 def load_model():
