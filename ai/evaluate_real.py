@@ -1,6 +1,6 @@
 """
 Script thống kê dữ liệu từ 15/10, tính tỉ lệ thiếu giờ và đánh giá MAE LSTM vs Baseline trên dữ liệu thật.
-Chạy: python ai/evaluate_real.py --data ai/data/node-01.csv --start_date 2025-10-15
+Chạy (từ thư mục gốc repo): py -3.12 ai\evaluate_real.py --data ai\data\node-01.csv --start_date 2026-10-15
 """
 import argparse
 import os
@@ -10,7 +10,7 @@ import tensorflow as tf
 import joblib
 from sklearn.metrics import mean_absolute_error
 
-from preprocess import clean_data, resample_hourly
+from preprocess import clean_data, resample_hourly, FEATURE_COLUMNS
 
 AI_DIR = os.path.dirname(os.path.abspath(__file__))
 MODEL_PATH = os.path.join(AI_DIR, "..", "model", "lstm_model.keras")
@@ -21,7 +21,8 @@ SCALER_PATH = os.path.join(AI_DIR, "..", "model", "scaler.pkl")
 if not os.path.exists(SCALER_PATH):
     SCALER_PATH = os.path.join(AI_DIR, "model", "scaler.pkl")
 
-FEATURE_COLS = ["temperature", "humidity", "pm25", "pm10", "co2"]
+# Phải đúng thứ tự cột lúc train (preprocess.FEATURE_COLUMNS) vì scaler.pkl được fit theo thứ tự này
+FEATURE_COLS = FEATURE_COLUMNS
 TARGET_COL = "pm25"
 WINDOW_SIZE = 24
 HORIZON = 24
@@ -35,7 +36,9 @@ def evaluate_real_data(data_path: str, start_date: str):
     if "timestamp" not in df_raw.columns:
         raise ValueError("File dữ liệu thiếu cột 'timestamp'!")
 
-    df_raw["timestamp"] = pd.to_datetime(df_raw["timestamp"])
+    df_raw["timestamp"] = pd.to_datetime(df_raw["timestamp"], utc=True)
+    # API trả giờ có múi giờ (UTC) -> đổi sang giờ Việt Nam rồi bỏ múi giờ để so sánh với --start_date
+    df_raw["timestamp"] = df_raw["timestamp"].dt.tz_convert("Asia/Ho_Chi_Minh").dt.tz_localize(None)
     
     # Lọc dữ liệu từ ngày bắt đầu (ví dụ: 15/10)
     start_dt = pd.to_datetime(start_date)
@@ -51,22 +54,25 @@ def evaluate_real_data(data_path: str, start_date: str):
     max_time = df_filtered["timestamp"].max()
     total_expected_hours = int((max_time - min_time).total_seconds() / 3600) + 1
     
-    # Clean và resample theo giờ liên tục
+    # Số giờ thật sự có bản ghi (tính TRƯỚC khi resample, vì resample_hourly nội suy lấp các giờ trống)
+    actual_hours = df_filtered["timestamp"].dt.floor("h").nunique()
+
+    # Clean và resample theo giờ liên tục (các giờ trống được nội suy để tạo cửa sổ trượt)
     df_clean = clean_data(df_filtered)
     df_resampled = resample_hourly(df_clean)
 
-    actual_hours = len(df_resampled)
     missing_hours = max(0, total_expected_hours - actual_hours)
     missing_rate = (missing_hours / total_expected_hours) * 100 if total_expected_hours > 0 else 0
 
     print("\n=== THỐNG KÊ DỮ LIỆU THẬT ===")
     print(f"- Khoảng thời gian: từ {min_time} đến {max_time}")
     print(f"- Tổng số giờ lý thuyết: {total_expected_hours} giờ")
-    print(f"- Số giờ thực tế có dữ liệu (sau resample): {actual_hours} giờ")
+    print(f"- Số giờ thực tế có bản ghi: {actual_hours} giờ")
+    print(f"- Tổng số bản ghi: {len(df_filtered)}")
     print(f"- Số giờ bị thiếu: {missing_hours} giờ")
     print(f"- Tỉ lệ thiếu dữ liệu: {missing_rate:.2f}%")
 
-    if actual_hours < WINDOW_SIZE + HORIZON:
+    if len(df_resampled) < WINDOW_SIZE + HORIZON:
         print("\n⚠️ Dữ liệu không đủ để chạy đánh giá dự báo 24 giờ (cần ít nhất 48 giờ liên tục).")
         return
 
@@ -132,6 +138,6 @@ def evaluate_real_data(data_path: str, start_date: str):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--data", default="ai/data/node-01.csv")
-    parser.add_argument("--start_date", default="2025-10-15") # Điều chỉnh năm/tháng nếu dữ liệu của bạn ở năm khác (VD: 2026-10-15)
+    parser.add_argument("--start_date", default="2026-10-15")  # ngày node thật bắt đầu gửi dữ liệu
     args = parser.parse_args()
     evaluate_real_data(args.data, args.start_date)

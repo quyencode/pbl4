@@ -18,7 +18,7 @@ from sklearn.preprocessing import MinMaxScaler
 
 from aqi import pm25_to_aqi
 from fetch_data import fetch_readings
-from preprocess import clean_data, resample_hourly
+from preprocess import clean_data, resample_hourly, FEATURE_COLUMNS
 
 AI_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -30,7 +30,8 @@ SCALER_PATH = os.getenv("SCALER_PATH", os.path.join(AI_DIR, "model", "scaler.pkl
 TRAINING_DATA_PATH = os.getenv("TRAINING_DATA_PATH", os.path.join(AI_DIR, "data", "node-01.csv"))
 
 # Danh sách 5 đặc trưng đầu vào tương ứng với mô hình đa biến
-FEATURE_COLS = ["temperature", "humidity", "pm25", "pm10", "co2"]
+# Phải đúng thứ tự cột lúc train (preprocess.FEATURE_COLUMNS) vì scaler.pkl được fit theo thứ tự này
+FEATURE_COLS = FEATURE_COLUMNS
 TARGET_COL = "pm25"
 WINDOW_SIZE = 24  # Số giờ lịch sử mô hình cần (24 bước thời gian)
 FETCH_LIMIT = int(os.getenv("PREDICT_FETCH_LIMIT", 2000))
