@@ -1,10 +1,10 @@
 # Sơ đồ đấu nối — Node cảm biến ESP32 (Task A1.1)
 
-> ⚠️ **Cập nhật (Tuần 2):** đã mua lại **PMS5003** (PM2.5/PM10), dự kiến về trong
-> khoảng 8 ngày — cần đấu nối và test lại theo bảng bên dưới khi hàng về.
-> **CO2 (MH-Z19B) vẫn chưa mua**, tiếp tục **mô phỏng trong firmware** (xem
-> `esp32_sensor_node.ino`, hàm `readMHZ19B()`). DHT11 vẫn là cảm biến thật đã lắp.
-> Chi tiết: xem `iot/mqtt_data_contract.md`.
+> ✅ **Cập nhật (Tuần 6):** PMS5003 đã về và đọc **số đo thật** (cắm qua đế chuyển 8 chân
+> 1.25 mm → 2.54 mm). DHT11 là cảm biến thật. **CO2 (MH-Z19B) vẫn chưa lắp**, tiếp tục
+> **mô phỏng trong firmware** (hàm `simulateCO2()`).
+> Thêm phần **cảnh báo tại chỗ**: 3 đèn LED, còi, nút tắt tiếng (mục 4). Hướng dẫn mua
+> linh kiện và đóng hộp: `HUONG_DAN_CANH_BAO_VA_DONG_HOP.md`, hình bố trí: `bo_tri_hop_node.png`.
 
 ## 1. Tổng quan kết nối
 
@@ -12,13 +12,23 @@
 |---|---|---|---|
 | DHT11 (nhiệt độ/độ ẩm) | VCC → 3.3V, GND → GND | DATA → GPIO4 | GPIO4 (kèm điện trở kéo lên 10kΩ) |
 | PMS5003 (PM2.5/PM10) | VCC → 5V, GND → GND | TX → GPIO16 (RX2), RX → GPIO17 (TX2, không bắt buộc) | GPIO16/GPIO17 (UART1) |
+| LCD 1602 I2C | VCC → 5V, GND → GND | SDA → GPIO21, SCL → GPIO22 | I2C, địa chỉ 0x27 (hoặc 0x3F) |
+| LED xanh / vàng / đỏ | Chân ngắn (−) → GND | Chân dài (+) → điện trở 220 Ω → GPIO | GPIO18 / GPIO19 / GPIO23 |
+| Còi chủ động 5V | (+) → 5V | (−) → cực C transistor S8050; E → GND; B → điện trở 1 kΩ → GPIO | GPIO27 (qua transistor) |
+| Nút tắt tiếng | — | Một chân → GPIO, chân còn lại → GND | GPIO13 (INPUT_PULLUP) |
+| MH-Z19B (CO2, chưa lắp) | VCC → 5V, GND → GND | TX → GPIO25, RX → GPIO26 | Để dành UART2 |
 
 Chân này khớp đúng với đoạn code sau trong `esp32_sensor_node.ino`, **không cần sửa code** nếu đấu đúng bảng trên:
 
 ```cpp
-#define DHTPIN 4
-#define PMS_RX_PIN 16
-#define PMS_TX_PIN 17
+#define DHTPIN      4
+// PMS5003: PMSSerial.begin(9600, SERIAL_8N1, 16, 17)
+// LCD:     Wire.begin(21, 22)
+#define LED_GREEN   18
+#define LED_YELLOW  19
+#define LED_RED     23
+#define BUZZER_PIN  27
+#define BTN_MUTE    13
 ```
 
 ## 2. Chi tiết module
@@ -36,16 +46,22 @@ Chân này khớp đúng với đoạn code sau trong `esp32_sensor_node.ino`, *
 - **Cần ~30 giây làm nóng** sau khi cấp nguồn để số liệu ổn định — không đọc giá trị ngay khi vừa bật
 - GND module nối chung GND với ESP32
 
+### Cảnh báo tại chỗ (đèn + còi + nút)
+- **Không nối còi thẳng vào GPIO**: còi ăn khoảng 20–30 mA, quá mức chân ESP32 chịu được → bật/tắt qua transistor NPN S8050/2N2222.
+- Thứ tự chân S8050 (mặt phẳng hướng về mình): **E – B – C**. 2N2222 có thể khác, xem lại bao bì/datasheet.
+- Nút nhấn không cần điện trở ngoài: firmware bật điện trở kéo lên có sẵn (`INPUT_PULLUP`).
+- Ngưỡng màu đèn và cách còi kêu: xem `HUONG_DAN_CANH_BAO_VA_DONG_HOP.md` mục 3.
+
 ## 3. Nguồn điện chung
 
 - ESP32 cấp nguồn qua cổng USB (5V) khi lập trình/test tại bàn
 - Khi lắp thực tế ngoài trời (node độc lập, Tuần 4), dùng cục sạc điện thoại 5V/1A trở lên qua cáp USB — PMS5003 tiêu thụ dòng đáng kể lúc quạt chạy, cần nguồn ổn định, không dùng cục sạc dòng yếu
 - GND của DHT11 và PMS5003 phải nối chung với GND của ESP32
 
-## 4. Việc cần làm tiếp (theo Task A1.1)
+## 4. Việc cần làm tiếp
 
-- [ ] Đối chiếu chân DHT11 và PMS5003 ở trên với module thật đang có trong tay (PMS5003 dự kiến về sau ~8 ngày)
-- [ ] Chụp ảnh sơ đồ đấu nối thật sau khi cắm xong, lưu vào thư mục này
-- [ ] Ghi chú lại nếu module thật có khác biệt (ví dụ chân đánh số khác, cần điện trở khác) ngay trong file này để Bình/Quyến không bị nhầm khi đọc lại
-- [ ] Sau khi đấu PMS5003, test đọc giá trị thật qua Serial Monitor, đối chiếu với dải hợp lý ngoài trời (PM2.5 thường 10–100 µg/m³ ở đô thị VN)
+- [x] Đối chiếu chân DHT11 và PMS5003 với module thật, test đọc giá trị thật qua Serial Monitor
+- [ ] Nối đèn, còi, nút theo bảng mục 1, nạp firmware mới và thử bằng que nhang
+- [ ] Đóng hộp theo `bo_tri_hop_node.png` (cửa hút/xả PMS5003 trùng lỗ khoét, DHT11 xa ESP32)
+- [ ] Chụp ảnh node đã đóng hộp (mặt nắp + bên trong), lưu vào thư mục này
 - [ ] Đọc kỹ ghi chú "CO2 là dữ liệu mô phỏng" trong `iot/mqtt_data_contract.md` trước khi viết báo cáo/bảo vệ, để không bị hiểu nhầm là số đo thật

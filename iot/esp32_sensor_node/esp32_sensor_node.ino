@@ -14,6 +14,9 @@
     - MH-Z19B : RX=25, TX=26 (UART2) - chưa có cảm biến, CO2 đang mô phỏng
     - DHT11   : DATA=GPIO4
     - LCD I2C : SDA=GPIO21, SCL=GPIO22
+    - Cảnh báo: LED xanh=GPIO18, LED vàng=GPIO19, LED đỏ=GPIO23 (mỗi LED qua điện trở 220 ohm)
+                Còi active 5V=GPIO27 qua transistor NPN S8050/2N2222 (điện trở 1k vào chân B)
+                Nút tắt tiếng=GPIO13 (một chân vào GPIO13, chân kia vào GND)
 */
 
 #include <WiFi.h>
@@ -32,9 +35,11 @@ const char* WIFI_SSID        = "Imou-B97E14";      // <-- tên Wi-Fi (KHÔNG com
 const char* WIFI_PASSWORD    = "Kd6dG464";  // <-- mật khẩu Wi-Fi (KHÔNG commit giá trị thật lên GitHub)
 const char* MQTT_BROKER      = "192.168.10.2";        // <-- IP máy chạy Docker/Mosquitto (máy Quyến), xem bằng ipconfig
 const int   MQTT_PORT        = 1883;
-const unsigned long READ_INTERVAL_MS = 10000;   // đọc cảm biến mỗi 30s
-const unsigned long SEND_INTERVAL_MS = 30000;  // gửi lên server mỗi 5 phút (demo: đổi tạm thành 30000)
-const unsigned long PMS_TIMEOUT_MS   = 10000;   // quá 10s không nhận frame PMS -> coi như lỗi
+const unsigned long READ_INTERVAL_MS = 10000;   // đọc cảm biến mỗi 10s (mỗi lần gửi luôn có số mới)
+const unsigned long SEND_INTERVAL_MS = 30000;   // gửi lên server mỗi 30s (chế độ demo; chạy lâu dài nên để 300000 = 5 phút)
+const unsigned long PMS_TIMEOUT_MS   = 10000;
+const unsigned long WIFI_RETRY_MS    = 30000;   // mất Wi-Fi: thử lại mỗi 30s (không chặn đèn/còi)
+const unsigned long MQTT_RETRY_MS    = 10000;   // mất broker: thử lại mỗi 10s   // quá 10s không nhận frame PMS -> coi như lỗi
 
 // ====== CHÂN CẮM ======
 #define DHTPIN   4
@@ -142,20 +147,16 @@ void flushBuffer() {
 }
 
 // ====== MQTT RECONNECT ======
+// Mỗi lần gọi chỉ thử 1 lần, không delay, để đèn/còi vẫn chạy khi mất broker
 void reconnectMQTT() {
-  int retry = 0;
-  while (!mqttClient.connected() && retry < 5) {
-    Serial.println("Đang kết nối MQTT broker...");
-    String clientId = String("esp32-") + DEVICE_ID;
-    if (mqttClient.connect(clientId.c_str())) {
-      Serial.println("Đã kết nối MQTT.");
-      flushBuffer(); // Gửi bù dữ liệu tồn đọng ngay khi kết nối lại
-    } else {
-      Serial.print("Kết nối MQTT thất bại, rc=");
-      Serial.println(mqttClient.state());
-      delay(5000);
-      retry++;
-    }
+  Serial.println("Đang kết nối MQTT broker...");
+  String clientId = String("esp32-") + DEVICE_ID;
+  if (mqttClient.connect(clientId.c_str())) {
+    Serial.println("Đã kết nối MQTT.");
+    flushBuffer(); // Gửi bù dữ liệu tồn đọng ngay khi kết nối lại
+  } else {
+    Serial.print("Kết nối MQTT thất bại, rc=");
+    Serial.println(mqttClient.state());
   }
 }
 
@@ -203,12 +204,150 @@ void readAllSensors() {
                 pmsOk ? "THAT" : "LOI");
 }
 
+// ====== CẢNH BÁO ĐÈN + CÒI ======
+// Ngưỡng theo PM2.5 (US EPA 2024, cùng bảng với Backend):
+//   <= 35.4   : xanh     (Tốt / Trung bình)       - còi im
+//   35.5-55.4 : vàng     (Kém, nhóm nhạy cảm)     - kêu 1 tiếng khi vừa chuyển sang
+//   55.5-125.4: đỏ       (Xấu)                    - kêu 3 tiếng khi vừa chuyển sang
+//   > 125.4   : đỏ nháy  (Rất xấu / Nguy hại)     - kêu 3 tiếng, lặp lại mỗi 60s
+// Dùng trung bình trượt 2 phút để đèn không chớp theo nhiễu, có trễ 2 ug/m3 khi hạ mức.
+#define LED_GREEN   18
+#define LED_YELLOW  19
+#define LED_RED     23
+#define BUZZER_PIN  27
+#define BTN_MUTE    13
+
+const int   AVG_SAMPLES   = 12;                       // 12 lần đọc x 10s = 2 phút
+const float HYSTERESIS    = 2.0;                      // phải giảm thêm 2 ug/m3 dưới ngưỡng mới hạ mức
+const float LEVEL_UPPER[] = {35.4, 55.4, 125.4};      // ranh giới giữa các mức 0|1|2|3
+const unsigned long MUTE_MS          = 30UL * 60 * 1000;   // bấm nút: im 30 phút
+const unsigned long SEVERE_REPEAT_MS = 60000;
+const int   QUIET_FROM_HOUR = 22, QUIET_TO_HOUR = 6;       // ban đêm chỉ bật đèn, không kêu
+
+float pmHistory[AVG_SAMPLES];
+int   pmCount = 0, pmIndex = 0;
+int   alertLevel = -1;                                // -1: chưa có số đo / cảm biến lỗi
+unsigned long muteUntil = 0, lastSevereBeep = 0;
+int   beepsLeft = 0;
+bool  buzzerOn = false;
+unsigned long buzzerToggleAt = 0;
+bool  btnPrev = HIGH;
+unsigned long btnChangedAt = 0;
+
+const char* LEVEL_NAME[] = {"TOT", "KEM", "XAU", "RAT XAU"};   // hiện trên LCD, tối đa 7 ký tự
+
+void alarmSetup() {
+  pinMode(LED_GREEN, OUTPUT);
+  pinMode(LED_YELLOW, OUTPUT);
+  pinMode(LED_RED, OUTPUT);
+  pinMode(BUZZER_PIN, OUTPUT);
+  pinMode(BTN_MUTE, INPUT_PULLUP);
+  // Tự kiểm tra khi khởi động: sáng cả 3 đèn + kêu 1 tiếng
+  digitalWrite(LED_GREEN, HIGH); digitalWrite(LED_YELLOW, HIGH); digitalWrite(LED_RED, HIGH);
+  digitalWrite(BUZZER_PIN, HIGH); delay(200); digitalWrite(BUZZER_PIN, LOW); delay(600);
+  digitalWrite(LED_GREEN, LOW); digitalWrite(LED_YELLOW, LOW); digitalWrite(LED_RED, LOW);
+}
+
+bool isQuietHours() {
+  struct tm t;
+  if (!getLocalTime(&t, 0)) return false;             // chưa có giờ thật thì không áp dụng
+  return t.tm_hour >= QUIET_FROM_HOUR || t.tm_hour < QUIET_TO_HOUR;
+}
+
+void beep(int times) {
+  if (millis() < muteUntil || isQuietHours()) return;
+  beepsLeft = times;
+  buzzerOn = false;
+  buzzerToggleAt = millis();
+}
+
+float averagePM25() {
+  if (pmCount == 0) return NAN;
+  float sum = 0;
+  for (int i = 0; i < pmCount; i++) sum += pmHistory[i];
+  return sum / pmCount;
+}
+
+int levelFor(float pm, int current) {
+  int lv = 0;
+  while (lv < 3 && pm > LEVEL_UPPER[lv]) lv++;
+  // Trễ khi hạ mức: chỉ hạ khi đã thấp hơn ranh giới của mức hiện tại 2 ug/m3
+  if (current > 0 && lv < current && pm > LEVEL_UPPER[current - 1] - HYSTERESIS) return current;
+  return lv;
+}
+
+// Gọi sau mỗi lần đọc cảm biến (10s)
+void updateAlertLevel() {
+  if (isnan(latestPM25)) {                 // cảm biến lỗi: xoá lịch sử, chuyển sang trạng thái lỗi
+    pmCount = 0; pmIndex = 0; alertLevel = -1;
+    return;
+  }
+  pmHistory[pmIndex] = latestPM25;
+  pmIndex = (pmIndex + 1) % AVG_SAMPLES;
+  if (pmCount < AVG_SAMPLES) pmCount++;
+
+  int newLevel = levelFor(averagePM25(), alertLevel < 0 ? 0 : alertLevel);
+  if (alertLevel >= 0 && newLevel > alertLevel) {     // chỉ kêu khi chất lượng xấu đi
+    beep(newLevel == 1 ? 1 : 3);
+    if (newLevel == 3) lastSevereBeep = millis();
+  }
+  if (alertLevel < 0 && newLevel >= 2) {             // vừa có số đo đã ở mức xấu
+    beep(3);
+    lastSevereBeep = millis();
+  }
+  if (newLevel != alertLevel)
+    Serial.printf("Mức cảnh báo: %s (PM2.5 TB 2 phút = %.1f)\n", LEVEL_NAME[newLevel], averagePM25());
+  alertLevel = newLevel;
+}
+
+// Gọi liên tục trong loop: điều khiển đèn, còi, nút tắt tiếng (không dùng delay)
+void alarmLoop() {
+  unsigned long now = millis();
+
+  // Nút tắt tiếng (chống dội 50ms): bấm -> im 30 phút; đang im mà bấm -> bật lại
+  bool btn = digitalRead(BTN_MUTE);
+  if (btn != btnPrev && now - btnChangedAt > 50) {
+    btnChangedAt = now;
+    btnPrev = btn;
+    if (btn == LOW) {
+      if (now < muteUntil) { muteUntil = 0; Serial.println("Bật lại còi"); }
+      else { muteUntil = now + MUTE_MS; beepsLeft = 0; Serial.println("Tắt tiếng 30 phút"); }
+    }
+  }
+
+  // Đèn: vàng nháy = chưa có số đo / cảm biến lỗi; đỏ nháy = rất xấu
+  bool blink = (now / 500) % 2;
+  digitalWrite(LED_GREEN,  alertLevel == 0);
+  digitalWrite(LED_YELLOW, alertLevel == 1 || (alertLevel < 0 && blink));
+  digitalWrite(LED_RED,    alertLevel == 2 || (alertLevel == 3 && blink));
+
+  // Mức rất xấu: nhắc lại mỗi 60s
+  if (alertLevel == 3 && now - lastSevereBeep >= SEVERE_REPEAT_MS) {
+    lastSevereBeep = now;
+    beep(3);
+  }
+
+  // Còi: mỗi tiếng kêu 150ms, nghỉ 150ms
+  if (beepsLeft > 0 && (long)(now - buzzerToggleAt) >= 0) {
+    buzzerOn = !buzzerOn;
+    digitalWrite(BUZZER_PIN, buzzerOn ? HIGH : LOW);
+    if (!buzzerOn) beepsLeft--;
+    buzzerToggleAt = now + 150;
+  }
+  if (beepsLeft == 0 && buzzerOn) {
+    buzzerOn = false;
+    digitalWrite(BUZZER_PIN, LOW);
+  }
+}
+
 // ====== HIỂN THỊ LÊN LCD ======
 void updateLCD() {
   lcd.setCursor(0, 0);
-  lcd.print("PM2.5:");
+  lcd.print("PM:");   // ngắn gọn để còn chỗ hiện mức cảnh báo
   if (isnan(latestPM25)) lcd.print("--");
   else lcd.print(latestPM25, 1);
+  lcd.print(" ");
+  lcd.print(alertLevel < 0 ? "LOI" : (millis() < muteUntil ? "IM" : LEVEL_NAME[alertLevel]));
   lcd.print("      ");
 
   lcd.setCursor(0, 1);
@@ -254,6 +393,8 @@ void setup() {
   lcd.setCursor(0, 0);
   lcd.print("PBL4 - Node 01");
 
+  alarmSetup();
+
   // Khởi tạo cảm biến
   dht.begin();
   PMSSerial.begin(9600, SERIAL_8N1, 16, 17);
@@ -276,6 +417,7 @@ void setup() {
   unsigned long warmupStart = millis();
   while (millis() - warmupStart < 30000) {
     pollPMS();   // vẫn đọc PMS trong lúc chờ để bộ đệm UART không bị tràn
+    alarmLoop(); // đèn vàng nháy trong lúc chờ (chưa có số đo)
     delay(10);
   }
 }
@@ -284,17 +426,29 @@ void setup() {
 void loop() {
   pollPMS();   // luôn đọc PMS5003 đầu tiên, liên tục
 
-  // Duy trì WiFi & MQTT
-  if (WiFi.status() != WL_CONNECTED) setupWiFi();
-  if (WiFi.status() == WL_CONNECTED && !mqttClient.connected()) reconnectMQTT();
-  mqttClient.loop();
+  alarmLoop(); // đèn, còi, nút tắt tiếng - chạy cả khi mất mạng
 
   unsigned long now = millis();
+
+  // Duy trì WiFi & MQTT (giới hạn tần suất thử lại để không chặn cảnh báo)
+  static unsigned long lastWifiTry = 0, lastMqttTry = 0;
+  if (WiFi.status() != WL_CONNECTED) {
+    if (now - lastWifiTry >= WIFI_RETRY_MS) {
+      lastWifiTry = now;
+      Serial.println("Mất WiFi, đang thử kết nối lại...");
+      WiFi.disconnect();
+      WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+    }
+  } else if (!mqttClient.connected()) {
+    if (now - lastMqttTry >= MQTT_RETRY_MS) { lastMqttTry = now; reconnectMQTT(); }
+  }
+  mqttClient.loop();
 
   // Đọc cảm biến & cập nhật LCD
   if (now - lastReadTime >= READ_INTERVAL_MS) {
     lastReadTime = now;
     readAllSensors();
+    updateAlertLevel();
     updateLCD();
   }
 
