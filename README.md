@@ -92,10 +92,10 @@ cần chờ module khác xong hẳn.
 
 ## 🎯 Mục tiêu tuần
 
-- [ ] Data contract (JSON MQTT + REST API) được chốt và không đổi nữa
-- [ ] Repository + khung thư mục được tạo
-- [ ] Mỗi người dựng xong môi trường phát triển riêng
-- [ ] Mỗi khối có bản "Hello World" chạy được (chưa cần đúng logic)
+- [x] Data contract (JSON MQTT + REST API) được chốt và không đổi nữa
+- [x] Repository + khung thư mục được tạo
+- [x] Mỗi người dựng xong môi trường phát triển riêng
+- [x] Mỗi khối có bản "Hello World" chạy được (chưa cần đúng logic)
 
 ---
 
@@ -180,8 +180,8 @@ iot/esp32_sensor_node/wiring_diagram.md   (mới tạo)
 
 ### Kiểm tra
 
-- [ ] Board nhận code, không lỗi upload
-- [ ] Serial Monitor in đúng IP sau khi kết nối Wi-Fi
+- [x] Board nhận code, không lỗi upload
+- [x] Serial Monitor in đúng IP sau khi kết nối Wi-Fi
 
 ---
 
@@ -387,16 +387,16 @@ dht.readTemperature() / dht.readHumidity()   // đọc thật (DHT11)
 
 ### Việc cần làm
 
-- [ ] Sau khi PMS5003 về hàng: đấu nối theo `wiring_diagram.md`, gọi thử `readPMS5003()`, in giá trị PM2.5/PM10 thật ra Serial
-- [ ] Gọi thử `readMHZ19B()`, in giá trị mô phỏng CO2 ra Serial
-- [ ] Đọc riêng DHT11, in nhiệt độ/độ ẩm thật ra Serial
-- [ ] Chạy quan sát vài phút: PM2.5/PM10 (thật) và CO2 (mô phỏng) đều biến thiên có quy luật, không đứng yên/không nhảy vô lý
+- [x] Sau khi PMS5003 về hàng: đấu nối theo `wiring_diagram.md`, gọi thử `readPMS5003()`, in giá trị PM2.5/PM10 thật ra Serial
+- [x] Gọi thử `readMHZ19B()`, in giá trị mô phỏng CO2 ra Serial
+- [x] Đọc riêng DHT11, in nhiệt độ/độ ẩm thật ra Serial
+- [x] Chạy quan sát vài phút: PM2.5/PM10 (thật) và CO2 (mô phỏng) đều biến thiên có quy luật, không đứng yên/không nhảy vô lý
 
 ### Kiểm tra
 
 - [ ] Giá trị PM2.5/PM10 đọc từ PMS5003 hợp lý so với môi trường thật (đối chiếu bằng mắt/thiết bị đo tham khảo nếu có)
-- [ ] Giá trị mô phỏng CO2 nằm trong dải đã đặt trong code (380–2000 ppm)
-- [ ] Không có giá trị `NaN` liên tục ở DHT11 hoặc PMS5003 khi cảm biến hoạt động bình thường
+- [x] Giá trị mô phỏng CO2 nằm trong dải đã đặt trong code (380–2000 ppm)
+- [x] Không có giá trị `NaN` liên tục ở DHT11 hoặc PMS5003 khi cảm biến hoạt động bình thường
 
 ---
 
@@ -410,13 +410,13 @@ buildPayload()
 
 ### Việc cần làm
 
-- [ ] Gộp 5 giá trị cảm biến + `device_id` + `timestamp` vào 1 JSON
-- [ ] Xử lý trường hợp cảm biến lỗi → gửi `null` thay vì crash
+- [x] Gộp 5 giá trị cảm biến + `device_id` + `timestamp` vào 1 JSON
+- [x] Xử lý trường hợp cảm biến lỗi → gửi `null` thay vì crash
 
 ### Kiểm tra
 
-- [ ] `Serial.println(buildPayload())` in ra đúng format JSON như trong `mqtt_data_contract.md`
-- [ ] JSON parse ngược lại được (dán vào jsonlint không lỗi)
+- [x] `Serial.println(buildPayload())` in ra đúng format JSON như trong `mqtt_data_contract.md`
+- [x] JSON parse ngược lại được (dán vào jsonlint không lỗi)
 
 ---
 
@@ -554,15 +554,15 @@ frontend/src/api.js
 # 5.5. ✅ CHECKPOINT CUỐI TUẦN 2
 
 ## Đạt
-- [ ] Đọc riêng từng cảm biến ra số liệu hợp lý
-- [ ] `buildPayload()` xuất đúng JSON theo contract
+- [x] Đọc riêng từng cảm biến ra số liệu hợp lý
+- [x] `buildPayload()` xuất đúng JSON theo contract
 
 ## Bình
-- [ ] MQTT broker nhận đúng message thật
-- [ ] `mqtt_subscriber.py` ghi được 1 record vào InfluxDB
+- [x] MQTT broker nhận đúng message thật
+- [x] `mqtt_subscriber.py` ghi được 1 record vào InfluxDB
 
 ## Lợi
-- [ ] `clean_data()` + `resample_hourly()` chạy đúng trên mock data
+- [x] `clean_data()` + `resample_hourly()` chạy đúng trên mock data
 
 ## Quyến
 - [x] Layout trang chính hoàn chỉnh
@@ -578,10 +578,10 @@ week2-done
 
 ## 🎯 Mục tiêu tuần
 
-- [ ] Node ESP32 publish MQTT hoàn chỉnh, liên tục
-- [ ] Backend nhận & lưu dữ liệu thật, có `GET /api/readings`
-- [ ] AI có hàm `fetch_data()` + `sliding window` hoàn chỉnh
-- [ ] Dashboard vẽ được biểu đồ lịch sử từ API thật (hoặc mock nâng cao)
+- [x] Node ESP32 publish MQTT hoàn chỉnh, liên tục
+- [x] Backend nhận & lưu dữ liệu thật, có `GET /api/readings`
+- [x] AI có hàm `fetch_data()` + `sliding window` hoàn chỉnh
+- [x] Dashboard vẽ được biểu đồ lịch sử từ API thật (hoặc mock nâng cao)
 
 ---
 
@@ -639,7 +639,7 @@ backend/app/mqtt_subscriber.py
 
 ### Việc cần làm
 
-- [ ] Nhận dữ liệu thật từ node của Đạt (không còn test thủ công)
+- [x] Nhận dữ liệu thật từ node của Đạt (không còn test thủ công)
 - [ ] Ghi liên tục, không rò rỉ kết nối (connection leak)
 
 ### Kiểm tra
@@ -664,13 +664,13 @@ get_readings()
 
 ### Việc cần làm
 
-- [ ] Viết Flux/query lấy dữ liệu theo `device_id`, `from`, `to`, `limit`
-- [ ] Trả JSON đúng `ReadingsResponse` trong `schemas.py`
+- [x] Viết Flux/query lấy dữ liệu theo `device_id`, `from`, `to`, `limit`
+- [x] Trả JSON đúng `ReadingsResponse` trong `schemas.py`
 
 ### Kiểm tra
 
-- [ ] Gọi qua `/docs` (Swagger UI) trả đúng dữ liệu đã ghi ở Task B3.1
-- [ ] `limit` hoạt động đúng, không trả nhiều hơn yêu cầu
+- [x] Gọi qua `/docs` (Swagger UI) trả đúng dữ liệu đã ghi ở Task B3.1
+- [x] `limit` hoạt động đúng, không trả nhiều hơn yêu cầu
 
 ---
 
@@ -692,8 +692,8 @@ fetch_readings()
 
 ### Việc cần làm
 
-- [ ] Gọi `GET /api/readings` của Bình, chuyển kết quả thành DataFrame
-- [ ] Lưu ra CSV để dùng lại khi huấn luyện
+- [x] Gọi `GET /api/readings` của Bình, chuyển kết quả thành DataFrame
+- [x] Lưu ra CSV để dùng lại khi huấn luyện
 
 ### Kiểm tra
 
@@ -717,13 +717,13 @@ make_sliding_windows()
 
 ### Việc cần làm
 
-- [ ] Cài đặt đúng công thức cửa sổ trượt (window_size, horizon)
+- [x] Cài đặt đúng công thức cửa sổ trượt (window_size, horizon)
 - [ ] Viết test nhỏ với mảng số giả lập để kiểm tra shape đầu ra
 
 ### Kiểm tra
 
-- [ ] `X.shape == (n, window_size, n_features)`
-- [ ] `y.shape == (n, horizon)`
+- [x] `X.shape == (n, window_size, n_features)`
+- [x] `y.shape == (n, horizon)`
 
 ---
 
@@ -771,15 +771,15 @@ frontend/src/App.jsx
 # 6.5. ✅ CHECKPOINT CUỐI TUẦN 3
 
 ## Đạt
-- [ ] Node publish liên tục, tự reconnect khi mất mạng
+- [x] Node publish liên tục, tự reconnect khi mất mạng
 
 ## Bình
 - [ ] Ghi dữ liệu thật ổn định 30 phút
-- [ ] `GET /api/readings` trả đúng dữ liệu
+- [x] `GET /api/readings` trả đúng dữ liệu
 
 ## Lợi
 - [ ] `fetch_data.py` lấy đúng dữ liệu từ backend
-- [ ] `make_sliding_windows()` shape đúng
+- [x] `make_sliding_windows()` shape đúng
 
 ## Quyến
 - [x] Dashboard vẽ được biểu đồ lịch sử từ API thật
@@ -864,12 +864,12 @@ backend/app/main.py
 
 ### Việc cần làm
 
-- [ ] Truy vấn bản ghi mới nhất của từng `device_id`
-- [ ] Trả về mảng `items` theo đúng schema
+- [x] Truy vấn bản ghi mới nhất của từng `device_id`
+- [x] Trả về mảng `items` theo đúng schema
 
 ### Kiểm tra
 
-- [ ] Kết quả cập nhật đúng sau mỗi lần node gửi dữ liệu mới
+- [x] Kết quả cập nhật đúng sau mỗi lần node gửi dữ liệu mới
 
 ---
 
@@ -955,17 +955,17 @@ backend/app/main.py
 - [ ] Buffer offline hoạt động đúng
 
 ## Bình
-- [ ] `readings/latest` cập nhật đúng thời gian thực
+- [x] `readings/latest` cập nhật đúng thời gian thực
 - [ ] Theo dõi ổn định 1 ngày không lỗi nghiêm trọng
 
 ## Lợi
 - [ ] Có bộ dữ liệu thật đầu tiên, đã đánh giá chất lượng
 
 ## Quyến
-- [ ] Dashboard chạy hoàn toàn bằng dữ liệu thật, không còn mock
+- [x] Dashboard chạy hoàn toàn bằng dữ liệu thật, không còn mock
 
 ## Cả nhóm
-- [ ] Pipeline Node → MQTT → Backend → API → Dashboard chạy xuyên suốt ít nhất 1 lần demo
+- [x] Pipeline Node → MQTT → Backend → API → Dashboard chạy xuyên suốt ít nhất 1 lần demo
 
 ```text
 week4-done
@@ -977,9 +977,9 @@ week4-done
 
 ## 🎯 Mục tiêu tuần
 
-- [ ] WebSocket realtime hoạt động
-- [ ] Mô hình LSTM v1 huấn luyện xong, có số liệu MAE/RMSE/MAPE
-- [ ] Dashboard vẽ biểu đồ realtime
+- [x] WebSocket realtime hoạt động
+- [x] Mô hình LSTM v1 huấn luyện xong, có số liệu MAE/RMSE/MAPE
+- [x] Dashboard vẽ biểu đồ realtime
 
 ---
 
@@ -1036,8 +1036,8 @@ broadcast_reading()
 
 ### Việc cần làm
 
-- [ ] Chấp nhận kết nối WebSocket, giữ danh sách `active_connections`
-- [ ] Đẩy dữ liệu mới ngay khi `mqtt_subscriber` ghi record mới (qua queue/callback)
+- [x] Chấp nhận kết nối WebSocket, giữ danh sách `active_connections`
+- [x] Đẩy dữ liệu mới ngay khi `mqtt_subscriber` ghi record mới (qua queue/callback)
 
 ### Kiểm tra
 
@@ -1055,12 +1055,12 @@ backend/app/main.py
 
 ### Việc cần làm
 
-- [ ] `POST /api/forecasts` nhận đúng payload theo contract
-- [ ] `GET /api/forecasts/latest` trả về bản ghi vừa nhận (tạm lưu in-memory hoặc DB)
+- [x] `POST /api/forecasts` nhận đúng payload theo contract
+- [x] `GET /api/forecasts/latest` trả về bản ghi vừa nhận (tạm lưu in-memory hoặc DB)
 
 ### Kiểm tra
 
-- [ ] Gửi thử payload mẫu bằng `curl`/Postman, nhận lại đúng qua `GET`
+- [x] Gửi thử payload mẫu bằng `curl`/Postman, nhận lại đúng qua `GET`
 
 ---
 
@@ -1083,12 +1083,12 @@ build_lstm_model()
 ### Việc cần làm
 
 - [ ] Chạy `train_model.py --model_type lstm` trên dữ liệu thật Tuần 4
-- [ ] Ghi lại số epoch, thời gian huấn luyện
+- [x] Ghi lại số epoch, thời gian huấn luyện
 
 ### Kiểm tra
 
 - [ ] Loss giảm dần qua các epoch (không tăng bất thường)
-- [ ] Mô hình lưu được file `.keras` thành công
+- [x] Mô hình lưu được file `.keras` thành công
 
 ---
 
@@ -1103,13 +1103,13 @@ persistence_baseline()
 
 ### Việc cần làm
 
-- [ ] Tính MAE/RMSE/MAPE trên tập test
-- [ ] So sánh với baseline Persistence
+- [x] Tính MAE/RMSE/MAPE trên tập test
+- [x] So sánh với baseline Persistence
 
 ### Kiểm tra
 
-- [ ] LSTM có MAE thấp hơn baseline (nếu không, ghi rõ nguyên nhân nghi ngờ — thường do thiếu dữ liệu)
-- [ ] Kết quả được ghi vào `ai/MODEL_CARD.md`
+- [x] LSTM có MAE thấp hơn baseline (nếu không, ghi rõ nguyên nhân nghi ngờ — thường do thiếu dữ liệu)
+- [x] Kết quả được ghi vào `ai/MODEL_CARD.md`
 
 ---
 
@@ -1161,11 +1161,11 @@ connectLiveSocket()
 - [ ] `iot/README.md` hoàn chỉnh, người khác làm theo được
 
 ## Bình
-- [ ] WebSocket đẩy dữ liệu realtime ổn định
-- [ ] `POST/GET /api/forecasts` hoạt động cơ bản
+- [x] WebSocket đẩy dữ liệu realtime ổn định
+- [x] `POST/GET /api/forecasts` hoạt động cơ bản
 
 ## Lợi
-- [ ] Có mô hình LSTM v1 với MAE/RMSE/MAPE ghi lại rõ ràng
+- [x] Có mô hình LSTM v1 với MAE/RMSE/MAPE ghi lại rõ ràng
 
 ## Quyến
 - [x] Dashboard cập nhật realtime qua WebSocket
@@ -1222,7 +1222,7 @@ iot/esp32_sensor_node/HUONG_DAN_CANH_BAO_VA_DONG_HOP.md
 
 - [ ] Nối mạch: LED xanh/vàng/đỏ → GPIO18/19/23; còi → GPIO27 **qua transistor**; nút → GPIO13 và GND
 - [ ] Nạp firmware mới có phần cảnh báo (điền lại Wi-Fi, IP broker trước khi nạp)
-- [ ] Cập nhật `wiring_diagram.md` với các chân mới
+- [x] Cập nhật `wiring_diagram.md` với các chân mới
 - [ ] Ngưỡng theo PM2.5 trung bình 2 phút (US EPA 2024, giống Backend):
 
 | PM2.5 (µg/m³) | Đèn | Còi |
@@ -1357,8 +1357,8 @@ frontend/src/App.jsx
 
 ### Việc cần làm
 
-- [ ] Nối `getLatestForecast()` với biểu đồ dự báo
-- [ ] Vẽ 2 đường: PM2.5 thực tế (lịch sử) và PM2.5 dự báo trên cùng biểu đồ hoặc 2 biểu đồ liền kề
+- [x] Nối `getLatestForecast()` với biểu đồ dự báo
+- [x] Vẽ 2 đường: PM2.5 thực tế (lịch sử) và PM2.5 dự báo trên cùng biểu đồ hoặc 2 biểu đồ liền kề
 
 ### Kiểm tra
 
@@ -1370,12 +1370,12 @@ frontend/src/App.jsx
 
 ### Việc cần làm
 
-- [ ] Hiển thị thông báo rõ ràng khi API trả 404 (chưa có forecast)
-- [ ] Không để trắng trang hoặc lỗi console khi thiếu dữ liệu dự báo
+- [x] Hiển thị thông báo rõ ràng khi API trả 404 (chưa có forecast)
+- [x] Không để trắng trang hoặc lỗi console khi thiếu dữ liệu dự báo
 
 ### Kiểm tra
 
-- [ ] Với node mới chưa từng chạy AI, dashboard vẫn hiển thị gọn gàng, không lỗi
+- [x] Với node mới chưa từng chạy AI, dashboard vẫn hiển thị gọn gàng, không lỗi
 
 ---
 
@@ -1404,7 +1404,7 @@ week6-done
 
 ## 🎯 Mục tiêu tuần
 
-- [ ] Cấu hình được ngưỡng cảnh báo theo node
+- [x] Cấu hình được ngưỡng cảnh báo theo node
 - [ ] Hệ thống tự phát hiện khi vượt ngưỡng
 - [ ] Mô hình AI có phiên bản 2 (CNN-LSTM) để so sánh
 
@@ -1451,7 +1451,7 @@ database/init_postgres.sql
 
 ### Việc cần làm
 
-- [ ] Đọc/ghi thật vào bảng `alert_configs` (thay vì trả giá trị mặc định cố định)
+- [x] Đọc/ghi thật vào bảng `alert_configs` (thay vì trả giá trị mặc định cố định)
 
 ### Kiểm tra
 
@@ -1530,8 +1530,8 @@ ai/MODEL_CARD.md
 
 ### Việc cần làm
 
-- [ ] Form nhập `pm25_threshold`, `aqi_threshold` theo từng node
-- [ ] Gọi `POST /api/alerts/config` khi lưu
+- [x] Form nhập `pm25_threshold`, `aqi_threshold` theo từng node
+- [x] Gọi `POST /api/alerts/config` khi lưu
 
 ### Kiểm tra
 
@@ -1543,8 +1543,8 @@ ai/MODEL_CARD.md
 
 ### Việc cần làm
 
-- [ ] Hiển thị banner/toast khi AQI/PM2.5 hiện tại vượt ngưỡng đã cấu hình
-- [ ] Không spam thông báo liên tục (chỉ hiện khi trạng thái thay đổi)
+- [x] Hiển thị banner/toast khi AQI/PM2.5 hiện tại vượt ngưỡng đã cấu hình
+- [x] Không spam thông báo liên tục (chỉ hiện khi trạng thái thay đổi)
 
 ### Kiểm tra
 
