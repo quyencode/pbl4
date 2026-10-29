@@ -30,6 +30,7 @@ from app.mqtt_subscriber import (
     INFLUXDB_URL,
     _parse_timestamp,
     set_reading_listener,
+    set_alert_listener,
     stop_mqtt_listener,
     start_mqtt_listener,
 )
@@ -71,13 +72,18 @@ async def on_startup():
             return
         asyncio.run_coroutine_threadsafe(broadcast_reading(reading), loop)
 
+    def forward_alert_to_websocket(alert: dict) -> None:
+        asyncio.run_coroutine_threadsafe(broadcast_message(alert), loop)
+
     set_reading_listener(forward_to_websocket)
+    set_alert_listener(forward_alert_to_websocket)
     _mqtt_client = start_mqtt_listener()
 
 
 @app.on_event("shutdown")
 def on_shutdown():
     set_reading_listener(None)
+    set_alert_listener(None)
     stop_mqtt_listener(_mqtt_client)
     _influx_client.close()
 
@@ -215,6 +221,20 @@ def set_alert_config(config: AlertConfig):
     return {"status": "saved", "config": saved}
 
 
+@app.get("/api/alerts")
+def get_alerts(
+    device_id: str,
+    limit: int = Query(default=20, ge=1, le=500),
+):
+    """Return the newest persisted alerts for one device (empty list when none exist)."""
+    try:
+        items = postgres_db.get_alert_events(device_id, limit)
+    except Exception as exc:
+        logger.exception("PostgreSQL alert query failed for device %s", device_id)
+        raise HTTPException(status_code=503, detail="Alert storage is temporarily unavailable") from exc
+    return {"device_id": device_id, "items": items}
+
+
 @app.websocket("/ws/live")
 async def websocket_live(websocket: WebSocket):
     """Đẩy dữ liệu realtime cho Dashboard. mqtt_subscriber gọi broadcast_reading()
@@ -234,7 +254,11 @@ async def websocket_live(websocket: WebSocket):
 async def broadcast_reading(reading: SensorReading):
     """Gửi 1 bản ghi mới tới mọi Dashboard đang mở /ws/live."""
     # mode="json" để datetime thành chuỗi ISO-8601 (send_json không tự đổi được)
-    message = reading.model_dump(mode="json")
+    await broadcast_message(reading.model_dump(mode="json"))
+
+
+async def broadcast_message(message: dict):
+    """Send a JSON message (reading or alert) to connected dashboards."""
     for connection in list(active_connections):
         try:
             await connection.send_json(message)

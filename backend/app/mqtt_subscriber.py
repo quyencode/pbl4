@@ -34,12 +34,61 @@ _write_api = _influx_client.write_api(write_options=SYNCHRONOUS)
 # Hàm được gọi sau mỗi lần ghi InfluxDB thành công (main.py dùng để đẩy WebSocket).
 # Chạy trên thread của paho-mqtt, nên hàm đăng ký vào đây không được block lâu.
 _reading_listener: Optional[Callable[[dict[str, Any]], None]] = None
+_alert_listener: Optional[Callable[[dict[str, Any]], None]] = None
+_alert_above: dict[tuple[str, str], bool] = {}
 
 
 def set_reading_listener(listener: Optional[Callable[[dict[str, Any]], None]]) -> None:
     """Đăng ký hàm nhận mỗi bản ghi vừa lưu (None để huỷ đăng ký)."""
     global _reading_listener
     _reading_listener = listener
+
+
+def set_alert_listener(listener: Optional[Callable[[dict[str, Any]], None]]) -> None:
+    """Register the callback for persisted threshold alerts."""
+    global _alert_listener
+    _alert_listener = listener
+
+
+def _check_alerts(data: dict[str, Any]) -> None:
+    """Evaluate each metric independently after its reading was stored in InfluxDB."""
+    from app import postgres_db
+    from app.aqi import pm25_to_aqi
+
+    device_id = data["device_id"].strip()
+    thresholds = postgres_db.get_alert_thresholds(device_id)
+    pm25 = data.get("pm25")
+    values = {"pm25": pm25, "aqi": pm25_to_aqi(pm25)}
+    triggered_at = _parse_timestamp(data.get("timestamp")) or datetime.now(timezone.utc)
+    for metric, value in values.items():
+        if value is None:
+            continue
+        threshold = thresholds[metric]
+        key = (device_id, metric)
+        is_above = value >= threshold
+        was_above = _alert_above.get(key, False)
+        _alert_above[key] = is_above
+        if not is_above:
+            continue
+        event = postgres_db.save_alert_event_if_due(
+            device_id, metric, float(value), threshold, triggered_at, force=not was_above
+        )
+        if event is not None and _alert_listener is not None:
+            _alert_listener({"type": "alert", **_serialize_alert(event)})
+
+
+def _serialize_alert(event: dict[str, Any]) -> dict[str, Any]:
+    triggered_at = event["triggered_at"]
+    if triggered_at.tzinfo is None:
+        triggered_at = triggered_at.replace(tzinfo=timezone.utc)
+    return {
+        "id": event["id"],
+        "device_id": event["device_id"],
+        "metric": event["metric"],
+        "value": float(event["value"]),
+        "threshold": float(event["threshold"]),
+        "triggered_at": triggered_at.astimezone(timezone.utc).isoformat(),
+    }
 
 
 def _parse_timestamp(value: Any) -> datetime | None:
@@ -167,6 +216,11 @@ def on_message(client: mqtt.Client, userdata: Any, msg: Any) -> None:
         logger.exception("Failed to write sensor payload from %s to InfluxDB", data["device_id"])
         return
     logger.info("Stored sensor reading for %s", data["device_id"])
+
+    try:
+        _check_alerts(data)
+    except Exception:
+        logger.exception("Alert evaluation failed for %s", data["device_id"])
 
     listener = _reading_listener
     if listener is not None:

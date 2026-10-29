@@ -126,6 +126,9 @@ cd "C:\Users\Acer\OneDrive\文档\Github\pbl4"
 # Dự báo 24 giờ tới cho node-01, gửi kết quả về Backend (lưu PostgreSQL)
 py -3.12 ai\predict.py --device_id node-01
 
+# Lập lịch chạy predict.py mỗi giờ trên Windows (chạy một lần từ thư mục repo)
+powershell -ExecutionPolicy Bypass -File scripts\install_predict_task.ps1 -DeviceId node-01
+
 # Huấn luyện lại mô hình trên dữ liệu mô phỏng (lưu vào model\lstm_model.keras)
 py -3.12 ai\train_model.py --data ai\data\mock_readings.csv
 
@@ -133,6 +136,9 @@ py -3.12 ai\train_model.py --data ai\data\mock_readings.csv
 py -3.12 ai\fetch_data.py --device_id node-01 --out ai\data\readings.csv
 ```
 Chạy `predict.py` xong, Dashboard tự lấy dự báo mới trong vòng 5 phút (hoặc bấm F5).
+Lệnh cài lịch tạo Windows Scheduled Task `PBL4-AirQuality-Predict`; máy chạy lịch cần có Python 3.12,
+dependencies trong `ai/requirements.txt`, model/scaler và Backend đang truy cập được. Phối hợp với Lợi
+để cài lịch trên máy AI và xác nhận đúng device/model trước khi bật.
 
 ---
 
