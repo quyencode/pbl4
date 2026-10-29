@@ -6,6 +6,8 @@ Chạy: python train_model.py --data data/readings.csv --epochs 50
 (dự báo = giữ nguyên giá trị hiện tại) như trong slide 16 của đề tài.
 """
 import argparse
+import os
+import joblib
 import numpy as np
 import pandas as pd
 import tensorflow as tf
@@ -99,10 +101,20 @@ def main(data_path: str, window_size: int, horizon: int, epochs: int, model_type
     print(f"{model_type}:  ", metrics_model)
     print("Baseline (Persistence):", metrics_baseline)
 
-    import os
+    # Lưu model và scaler vào đúng thư mục model/ và ai/model/ để predict.py nhận diện
     os.makedirs("model", exist_ok=True)
-    model.save(f"model/{model_type}_model.keras")
-    print(f"\nĐã lưu mô hình vào model/{model_type}_model.keras")
+    os.makedirs("ai/model", exist_ok=True)
+
+    model_filename = f"model/{model_type}_model.keras"
+    scaler_filename = "model/scaler.pkl"
+    ai_scaler_filename = "ai/model/scaler.pkl"
+
+    model.save(model_filename)
+    joblib.dump(scaler, scaler_filename)
+    joblib.dump(scaler, ai_scaler_filename)
+
+    print(f"\nĐã lưu mô hình vào {model_filename}")
+    print(f"Đã lưu scaler vào {scaler_filename} và {ai_scaler_filename}")
     print("-> Cập nhật kết quả MAE/RMSE/MAPE vào ai/MODEL_CARD.md")
 
 
