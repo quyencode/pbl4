@@ -37,6 +37,8 @@ from app.mqtt_subscriber import (
 from app.aqi import pm25_to_aqi
 from app import postgres_db
 
+# Hiện log INFO của app (vd "Stored sensor reading for node-01", "Connected to MQTT broker") trong cửa sổ uvicorn
+logging.basicConfig(level=logging.INFO, format="%(levelname)s:     %(name)s - %(message)s")
 logger = logging.getLogger(__name__)
 _influx_client = InfluxDBClient(url=INFLUXDB_URL, token=INFLUXDB_TOKEN, org=INFLUXDB_ORG)
 _mqtt_client = None
