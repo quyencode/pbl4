@@ -459,7 +459,7 @@ export default function App() {
               <LineChart data={history}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#eef2ea" />
                 <XAxis dataKey="timestamp" hide />
-                <YAxis yAxisId="temp" stroke="#ea580c" unit="°C" width={48} domain={["dataMin - 2", "dataMax + 2"]} allowDecimals={false} />
+                <YAxis yAxisId="temp" stroke="#ea580c" unit="°C" width={48} domain={[(min) => Math.floor(min - 2), (max) => Math.ceil(max + 2)]} allowDecimals={false} />
                 <YAxis yAxisId="hum" orientation="right" stroke="#0284c7" unit="%" width={56} domain={[0, 100]} />
                 <Tooltip labelFormatter={formatTime} contentStyle={{ borderRadius: 14, border: "1px solid #e0f2fe" }} />
                 <Legend />
