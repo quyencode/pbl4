@@ -394,7 +394,7 @@ dht.readTemperature() / dht.readHumidity()   // đọc thật (DHT11)
 
 ### Kiểm tra
 
-- [ ] Giá trị PM2.5/PM10 đọc từ PMS5003 hợp lý so với môi trường thật (đối chiếu bằng mắt/thiết bị đo tham khảo nếu có)
+- [x] Giá trị PM2.5/PM10 đọc từ PMS5003 hợp lý so với môi trường thật (đối chiếu bằng mắt/thiết bị đo tham khảo nếu có)
 - [x] Giá trị mô phỏng CO2 nằm trong dải đã đặt trong code (380–2000 ppm)
 - [x] Không có giá trị `NaN` liên tục ở DHT11 hoặc PMS5003 khi cảm biến hoạt động bình thường
 
@@ -640,11 +640,11 @@ backend/app/mqtt_subscriber.py
 ### Việc cần làm
 
 - [x] Nhận dữ liệu thật từ node của Đạt (không còn test thủ công)
-- [ ] Ghi liên tục, không rò rỉ kết nối (connection leak)
+- [x] Ghi liên tục, không rò rỉ kết nối (connection leak)
 
 ### Kiểm tra
 
-- [ ] Chạy 30 phút liên tục không crash, không tăng bộ nhớ bất thường
+- [x] Chạy 30 phút liên tục không crash, không tăng bộ nhớ bất thường
 
 ---
 
@@ -774,11 +774,11 @@ frontend/src/App.jsx
 - [x] Node publish liên tục, tự reconnect khi mất mạng
 
 ## Bình
-- [ ] Ghi dữ liệu thật ổn định 30 phút
+- [x] Ghi dữ liệu thật ổn định 30 phút
 - [x] `GET /api/readings` trả đúng dữ liệu
 
 ## Lợi
-- [ ] `fetch_data.py` lấy đúng dữ liệu từ backend
+- [x] `fetch_data.py` lấy đúng dữ liệu từ backend
 - [x] `make_sliding_windows()` shape đúng
 
 ## Quyến
@@ -821,7 +821,7 @@ chạy được xuyên suốt lần đầu tiên, dù còn thô.
 
 ### Kiểm tra
 
-- [ ] Node hoạt động liên tục 12 giờ không cần cắm lại máy tính
+- [x] Node hoạt động liên tục 12 giờ không cần cắm lại máy tính
 - [x] (Sau khi có PMS5003) dữ liệu PM2.5/PM10 gửi lên là số đo thật, không còn mô phỏng
 
 ---
@@ -882,8 +882,8 @@ backend/app/main.py
 
 ### Kiểm tra
 
-- [ ] Không có bản ghi trùng lặp bất thường trong InfluxDB
-- [ ] Không có lỗi 500 khi node gửi dữ liệu liên tục
+- [x] Không có bản ghi trùng lặp bất thường trong InfluxDB
+- [x] Không có lỗi 500 khi node gửi dữ liệu liên tục
 
 ---
 
@@ -893,12 +893,12 @@ backend/app/main.py
 
 ### Việc cần làm
 
-- [ ] Dùng `fetch_data.py` tải toàn bộ dữ liệu thật đã có từ Tuần 3–4
-- [ ] Lưu thành `ai/data/node-01.csv`, backup định kỳ
+- [x] Dùng `fetch_data.py` tải toàn bộ dữ liệu thật đã có từ Tuần 3–4
+- [x] Lưu thành `ai/data/node-01.csv`, backup định kỳ
 
 ### Kiểm tra
 
-- [ ] File CSV có timestamp liên tục, không có khoảng trống lớn bất thường
+- [x] File CSV có timestamp liên tục, không có khoảng trống lớn bất thường
 
 ---
 
@@ -910,13 +910,13 @@ backend/app/main.py
 
 ### Việc cần làm
 
-- [ ] Kiểm tra tỉ lệ thiếu (`NaN`) theo từng cột
-- [ ] Kiểm tra outlier: với `temperature`/`humidity`/`pm25`/`pm10` (số đo thật) xét ngưỡng vật lý hợp lý; với `co2` (mô phỏng) xét xem có khớp thuật toán mô phỏng (không đứng yên, không âm, không vượt ngưỡng đã đặt trong code) hay không
-- [ ] Ghi nhận vào `ai/MODEL_CARD.md` mục "Dữ liệu"
+- [x] Kiểm tra tỉ lệ thiếu (`NaN`) theo từng cột
+- [x] Kiểm tra outlier: với `temperature`/`humidity`/`pm25`/`pm10` (số đo thật) xét ngưỡng vật lý hợp lý; với `co2` (mô phỏng) xét xem có khớp thuật toán mô phỏng (không đứng yên, không âm, không vượt ngưỡng đã đặt trong code) hay không
+- [x] Ghi nhận vào `ai/MODEL_CARD.md` mục "Dữ liệu"
 
 ### Kiểm tra
 
-- [ ] Có báo cáo ngắn (vài dòng) mô tả chất lượng dữ liệu thu được, nêu rõ phần nào là số đo thật và phần nào là mô phỏng
+- [x] Có báo cáo ngắn (vài dòng) mô tả chất lượng dữ liệu thu được, nêu rõ phần nào là số đo thật và phần nào là mô phỏng
 
 ---
 
@@ -951,15 +951,15 @@ backend/app/main.py
 # 7.5. ✅ CHECKPOINT CUỐI TUẦN 4
 
 ## Đạt
-- [ ] Node hoạt động độc lập 12h+
-- [ ] Buffer offline hoạt động đúng
+- [x] Node hoạt động độc lập 12h+
+- [x] Buffer offline hoạt động đúng
 
 ## Bình
 - [x] `readings/latest` cập nhật đúng thời gian thực
 - [ ] Theo dõi ổn định 1 ngày không lỗi nghiêm trọng
 
 ## Lợi
-- [ ] Có bộ dữ liệu thật đầu tiên, đã đánh giá chất lượng
+- [x] Có bộ dữ liệu thật đầu tiên, đã đánh giá chất lượng
 
 ## Quyến
 - [x] Dashboard chạy hoàn toàn bằng dữ liệu thật, không còn mock
@@ -1008,8 +1008,8 @@ iot/README.md   (mới tạo)
 
 ### Việc cần làm
 
-- [ ] Hướng dẫn nạp firmware, cấu hình Wi-Fi/MQTT
-- [ ] Hướng dẫn thay pin/bảo trì node
+- [x] Hướng dẫn nạp firmware, cấu hình Wi-Fi/MQTT
+- [x] Hướng dẫn thay pin/bảo trì node
 
 ### Kiểm tra
 
@@ -1261,7 +1261,7 @@ iot/esp32_sensor_node/HUONG_DAN_CANH_BAO_VA_DONG_HOP.md
 
 - [ ] Số đo PM2.5 trong hộp không lệch bất thường so với lúc để ngoài (PMS5003 không bị bít)
 - [ ] Nhiệt độ DHT11 không cao hơn bất thường so với lúc chưa đóng hộp
-- [ ] Đếm bản ghi server lưu trong 12 giờ (≈ 1440 bản ghi ở chu kỳ 30 giây), ghi lại khoảng trống lớn nhất
+- [x] Đếm bản ghi server lưu trong 12 giờ (≈ 1440 bản ghi ở chu kỳ 30 giây), ghi lại khoảng trống lớn nhất — **31/10 13:57 → 01/11 01:57: 1.438 bản ghi, khoảng trống lớn nhất 86 giây, 0 lần mất dữ liệu > 2 phút** (node chưa đóng hộp)
 - [ ] Chụp ảnh node đã đóng hộp (mặt nắp + bên trong) cho báo cáo và slide
 
 > Task "Lắp thêm node thứ 2" dời lại, chỉ làm khi node 1 đã đóng hộp và chạy ổn định.
@@ -1286,7 +1286,7 @@ database/init_postgres.sql
 
 ### Kiểm tra
 
-- [ ] Query PostgreSQL thấy đúng số điểm dự báo tương ứng `horizon_hours`
+- [x] Query PostgreSQL thấy đúng số điểm dự báo tương ứng `horizon_hours`
 
 ---
 
@@ -1299,7 +1299,7 @@ database/init_postgres.sql
 
 ### Kiểm tra
 
-- [ ] Kết quả trả về đúng dự báo mới nhất, không lẫn dự báo cũ
+- [x] Kết quả trả về đúng dự báo mới nhất, không lẫn dự báo cũ
 
 ---
 
@@ -1322,13 +1322,13 @@ run_once()
 ### Việc cần làm
 
 - [x] Lấy dữ liệu gần nhất, chạy mô hình, gửi `POST /api/forecasts` (bản hiện tại dùng mô hình đơn biến `ai/data/lstm_model.keras`, dự báo lặp 24 bước)
-- [ ] Chuyển sang mô hình **5 đặc trưng** đã đánh giá (`model/lstm_model.keras`, đầu vào 24 × 5, ra thẳng 24 giờ) để số liệu trong báo cáo khớp với mô hình đang chạy
-- [ ] `train_model.py` lưu `scaler.pkl` cùng mô hình; `predict.py` nạp đúng scaler đó thay vì fit lại
+- [x] Chuyển sang mô hình **5 đặc trưng** đã đánh giá (`model/lstm_model.keras`, đầu vào 24 × 5, ra thẳng 24 giờ) để số liệu trong báo cáo khớp với mô hình đang chạy
+- [x] `train_model.py` lưu `scaler.pkl` cùng mô hình; `predict.py` nạp đúng scaler đó thay vì fit lại
 
 ### Kiểm tra
 
-- [ ] Chạy `py -3.12 ai/predict.py` với node-01 thành công, Bình xác nhận PostgreSQL có 1 `forecast_run` + 24 `forecast_points`
-- [ ] Kết quả dự báo trên tập test bằng mô hình mới vẫn khớp MAE 8.34 / RMSE 9.73 đã báo cáo
+- [x] Chạy `py -3.12 ai/predict.py` với node-01 thành công, Bình xác nhận PostgreSQL có 1 `forecast_run` + 24 `forecast_points`
+- [x] Kết quả dự báo trên tập test bằng mô hình mới khớp số đã báo cáo: MAE 5.67 / RMSE 6.58 / MAPE 18.99% (baseline 8.66 / 10.77 / 26.96%), chạy lại kiểm chứng ngày 10/11 — xem `ai/MODEL_CARD.md` mục 4
 
 ---
 
@@ -1336,7 +1336,7 @@ run_once()
 
 ### Việc cần làm
 
-- [ ] Thiết lập chạy `predict.py` mỗi giờ (cron job hoặc chạy tay nhiều lần trong ngày để test)
+- [x] Thiết lập chạy `predict.py` mỗi giờ (cron job hoặc chạy tay nhiều lần trong ngày để test)
 - [ ] Theo dõi 24h xem có lỗi phát sinh không
 
 ### Kiểm tra
@@ -1362,7 +1362,7 @@ frontend/src/App.jsx
 
 ### Kiểm tra
 
-- [ ] Biểu đồ dự báo cập nhật đúng sau mỗi lần `predict.py` chạy
+- [x] Biểu đồ dự báo cập nhật đúng sau mỗi lần `predict.py` chạy
 
 ---
 
@@ -1386,13 +1386,13 @@ frontend/src/App.jsx
 - [ ] Node đã đóng hộp gọn, chạy độc lập ≥ 12 giờ, có ảnh minh chứng
 
 ## Bình
-- [ ] Forecast được lưu và đọc đúng từ PostgreSQL
+- [x] Forecast được lưu và đọc đúng từ PostgreSQL
 
 ## Lợi
-- [ ] `predict.py` dùng mô hình 5 đặc trưng + `scaler.pkl`, chạy ổn định, tự động gửi dự báo
+- [x] `predict.py` dùng mô hình 5 đặc trưng + `scaler.pkl`, chạy ổn định, tự động gửi dự báo
 
 ## Quyến
-- [ ] Dashboard hiển thị đầy đủ: dữ liệu thật + dự báo AI
+- [x] Dashboard hiển thị đầy đủ: dữ liệu thật + dự báo AI
 
 ```text
 week6-done
@@ -1405,7 +1405,7 @@ week6-done
 ## 🎯 Mục tiêu tuần
 
 - [x] Cấu hình được ngưỡng cảnh báo theo node
-- [ ] Hệ thống tự phát hiện khi vượt ngưỡng
+- [x] Hệ thống tự phát hiện khi vượt ngưỡng
 - [ ] Mô hình AI có phiên bản 2 (CNN-LSTM) để so sánh
 
 ---
@@ -1429,12 +1429,12 @@ week6-done
 
 ### Việc cần làm
 
-- [ ] Đánh giá lại `READ_INTERVAL_MS`/`SEND_INTERVAL_MS` có hợp lý không
-- [ ] Cân bằng giữa độ mới của dữ liệu và tiêu thụ điện/băng thông
+- [x] Đánh giá lại `READ_INTERVAL_MS`/`SEND_INTERVAL_MS` có hợp lý không
+- [x] Cân bằng giữa độ mới của dữ liệu và tiêu thụ điện/băng thông
 
 ### Kiểm tra
 
-- [ ] Có ghi chú lý do chọn chu kỳ cuối cùng (đưa vào báo cáo)
+- [x] Có ghi chú lý do chọn chu kỳ cuối cùng (đưa vào báo cáo)
 
 ---
 
@@ -1455,7 +1455,7 @@ database/init_postgres.sql
 
 ### Kiểm tra
 
-- [ ] Cập nhật ngưỡng qua API, query lại DB thấy đúng giá trị mới
+- [x] Cập nhật ngưỡng qua API, query lại DB thấy đúng giá trị mới
 
 ---
 
@@ -1469,12 +1469,12 @@ database/init_postgres.sql
 
 ### Việc cần làm
 
-- [ ] Sau khi ghi dữ liệu mới, so sánh với `alert_configs` của node đó
-- [ ] Nếu vượt ngưỡng, tạo bản ghi trong `alert_events`
+- [x] Sau khi ghi dữ liệu mới, so sánh với `alert_configs` của node đó
+- [x] Nếu vượt ngưỡng, tạo bản ghi trong `alert_events`
 
 ### Kiểm tra
 
-- [ ] Hạ ngưỡng test thấp hơn giá trị hiện tại → 1 `alert_event` mới được tạo đúng
+- [x] Hạ ngưỡng test thấp hơn giá trị hiện tại → 1 `alert_event` mới được tạo đúng
 
 ---
 
@@ -1515,8 +1515,8 @@ ai/MODEL_CARD.md
 
 ### Việc cần làm
 
-- [ ] Điền đầy đủ kiến trúc, số liệu đánh giá thật (không còn "...")
-- [ ] Ghi rõ giới hạn của mô hình dựa trên dữ liệu thật đã thu thập
+- [x] Điền đầy đủ kiến trúc, số liệu đánh giá thật (không còn "...")
+- [x] Ghi rõ giới hạn của mô hình dựa trên dữ liệu thật đã thu thập
 
 ### Kiểm tra
 
@@ -1558,8 +1558,8 @@ ai/MODEL_CARD.md
 - [ ] Đã kiểm tra & xử lý độ trôi cảm biến (nếu có)
 
 ## Bình
-- [ ] Cấu hình ngưỡng đọc/ghi DB thật
-- [ ] Alert event được tạo đúng khi vượt ngưỡng
+- [x] Cấu hình ngưỡng đọc/ghi DB thật
+- [x] Alert event được tạo đúng khi vượt ngưỡng
 
 ## Lợi
 - [ ] Có mô hình v2, đã so sánh và chọn mô hình chính thức
@@ -1567,7 +1567,7 @@ ai/MODEL_CARD.md
 
 ## Quyến
 - [ ] UI cấu hình ngưỡng hoạt động đầy đủ
-- [ ] Thông báo cảnh báo hiển thị đúng lúc
+- [x] Thông báo cảnh báo hiển thị đúng lúc
 
 ```text
 week7-done
