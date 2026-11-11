@@ -1,8 +1,6 @@
 # Model Card — Mô hình dự báo chất lượng không khí
 
-> Cập nhật 10/11/2026 cho mô hình đang chạy thật (`model/lstm_model.keras` + `model/scaler.pkl`, PR #23 của Lợi).
-> Mọi số trong mục 4 đã được **chạy lại** từ đúng file mô hình và scaler trong repo trên tập test mô phỏng,
-> kết quả trùng với số Lợi báo khi huấn luyện. Lợi kiểm tra lại mục 3 (cách train) và bổ sung nếu thiếu.
+> Người phụ trách: Ngô Trí Lợi. Cập nhật ngày 10/11/2026 cho mô hình đang chạy (`model/lstm_model.keras` + `model/scaler.pkl`).
 
 ## 1. Bài toán
 - Đầu vào: chuỗi lịch sử **24 giờ** gần nhất (trung bình theo giờ) của 5 đặc trưng:

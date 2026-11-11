@@ -1,8 +1,6 @@
 # Khối IoT: Node cảm biến chất lượng không khí (ESP32)
 
-> Tài liệu Task A5.2: nạp firmware, cấu hình, vận hành, bảo trì. Có kèm ghi chú chu kỳ gửi của Task A7.2.
-> Soạn ngày 10/11/2026 từ firmware `esp32_sensor_node/esp32_sensor_node.ino` và kết quả chạy thật đêm 31/10.
-> **Đạt kiểm tra lại** các bước nạp và lắp đặt cho khớp với node thật.
+> Tài liệu Task A5.2 (kèm ghi chú chu kỳ gửi của Task A7.2). Người phụ trách: Lê Quang Đạt. Cập nhật ngày 10/11/2026.
 
 - Firmware: [`esp32_sensor_node/esp32_sensor_node.ino`](esp32_sensor_node/esp32_sensor_node.ino)
 - Sơ đồ đấu nối chi tiết: [`esp32_sensor_node/wiring_diagram.md`](esp32_sensor_node/wiring_diagram.md)
