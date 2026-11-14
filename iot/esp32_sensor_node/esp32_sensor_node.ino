@@ -33,13 +33,13 @@
 const char* DEVICE_ID        = "node-01";
 const char* WIFI_SSID        = "Imou-B97E14";      // <-- tên Wi-Fi (KHÔNG commit giá trị thật lên GitHub)
 const char* WIFI_PASSWORD    = "Kd6dG464";  // <-- mật khẩu Wi-Fi (KHÔNG commit giá trị thật lên GitHub)
-const char* MQTT_BROKER      = "192.168.10.2";        // <-- IP máy chạy Docker/Mosquitto (máy Quyến), xem bằng ipconfig
+const char* MQTT_BROKER      = "192.168.10.4";        // <-- IP máy chạy Docker/Mosquitto (máy Quyến), xem bằng ipconfig
 const int   MQTT_PORT        = 1883;
 const unsigned long READ_INTERVAL_MS = 10000;   // đọc cảm biến mỗi 10s (mỗi lần gửi luôn có số mới)
 const unsigned long SEND_INTERVAL_MS = 30000;   // gửi lên server mỗi 30s (chế độ demo; chạy lâu dài nên để 300000 = 5 phút)
-const unsigned long PMS_TIMEOUT_MS   = 10000;
+const unsigned long PMS_TIMEOUT_MS   = 10000;   // quá 10s không nhận frame PMS -> coi như lỗi
 const unsigned long WIFI_RETRY_MS    = 30000;   // mất Wi-Fi: thử lại mỗi 30s (không chặn đèn/còi)
-const unsigned long MQTT_RETRY_MS    = 10000;   // mất broker: thử lại mỗi 10s   // quá 10s không nhận frame PMS -> coi như lỗi
+const unsigned long MQTT_RETRY_MS    = 30000;   // mất broker: thử lại mỗi 30s (mỗi lần thử có thể chặn ~3s)
 
 // ====== CHÂN CẮM ======
 #define DHTPIN   4
@@ -97,6 +97,8 @@ String getISOTimestamp() {
 // ====== WIFI + NTP ======
 void setupWiFi() {
   WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+  // Bật NTP ngay cả khi chưa có Wi-Fi: có mạng lúc nào thì tự đồng bộ giờ lúc đó
+  configTime(7 * 3600, 0, "pool.ntp.org", "time.nist.gov");
   Serial.print("Đang kết nối WiFi");
   int retry = 0;
   while (WiFi.status() != WL_CONNECTED && retry < 40) {
@@ -106,7 +108,6 @@ void setupWiFi() {
   }
   if (WiFi.status() == WL_CONNECTED) {
     Serial.println("\nWiFi đã kết nối, IP: " + WiFi.localIP().toString());
-    configTime(7 * 3600, 0, "pool.ntp.org", "time.nist.gov");
     Serial.print("Đang đồng bộ NTP");
     struct tm timeinfo;
     int ntpRetry = 0;
@@ -341,13 +342,20 @@ void alarmLoop() {
 }
 
 // ====== HIỂN THỊ LÊN LCD ======
+// Mức 0 (đèn xanh) gồm 2 mức của Dashboard: Tốt (<= 9.0) và Trung bình (9.1-35.4),
+// nên tách chữ trên LCD theo PM2.5 TB 2 phút để khớp Dashboard. Các mức khác giữ theo đèn.
+const char* lcdLabel() {
+  if (alertLevel == 0) return averagePM25() <= 9.0 ? "TOT" : "TB";
+  return LEVEL_NAME[alertLevel];
+}
+
 void updateLCD() {
   lcd.setCursor(0, 0);
   lcd.print("PM:");   // ngắn gọn để còn chỗ hiện mức cảnh báo
   if (isnan(latestPM25)) lcd.print("--");
   else lcd.print(latestPM25, 1);
   lcd.print(" ");
-  lcd.print(alertLevel < 0 ? "LOI" : (millis() < muteUntil ? "IM" : LEVEL_NAME[alertLevel]));
+  lcd.print(alertLevel < 0 ? "LOI" : (millis() < muteUntil ? "IM" : lcdLabel()));
   lcd.print("      ");
 
   lcd.setCursor(0, 1);

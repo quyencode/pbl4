@@ -123,7 +123,7 @@ Nếu Backend đang chạy thì cửa sổ Backend in `Stored sensor reading for
 ## 7. Đọc trạng thái trên node
 
 **LCD:** dòng 1 là `PM:<PM2.5> <mức>`, dòng 2 là `T:<nhiệt độ>C H:<độ ẩm>%`.
-Mức là `TOT`, `KEM`, `XAU` hoặc `RAT XAU`. `IM` nghĩa là đang tắt tiếng; `LOI` là chưa có số đo hoặc PMS5003 lỗi.
+Mức là `TOT` (≤ 9,0), `TB` (trung bình, 9,1–35,4), `KEM`, `XAU` hoặc `RAT XAU`, cùng tên mức với Dashboard nhưng tính theo PM2.5 trung bình 2 phút. `IM` nghĩa là đang tắt tiếng; `LOI` là chưa có số đo hoặc PMS5003 lỗi.
 
 **Đèn và còi** dựa trên **PM2.5 trung bình 2 phút** (12 lần đọc), không dựa trên AQI. Bảng mức theo US EPA 2024, giống Backend:
 
@@ -182,7 +182,7 @@ lại hệ thống, chạy **Backend ngay sau Docker** để không bỏ lỡ ph
 | `SEND_INTERVAL_MS` | 30.000 (30 s) | **Chế độ demo**: Dashboard cập nhật gần thời gian thực. Khoảng 2.880 bản ghi/ngày, ~0,4 MB/ngày với gói tin ~150 byte |
 | Đề xuất khi chạy lâu dài | 300.000 (5 phút) | AI chỉ dùng trung bình theo giờ, 12 mẫu/giờ là đủ. Số bản ghi giảm 10 lần (~288/ngày), đỡ tải broker và DB |
 | `BUFFER_SIZE` | 50 bản ghi | Ở 30 s giữ được ~25 phút mất mạng; ở 5 phút giữ được ~4 giờ |
-| `WIFI_RETRY_MS` / `MQTT_RETRY_MS` | 30 s / 10 s | Thử lại không chặn vòng lặp, nên đèn và còi vẫn chạy khi mất mạng |
+| `WIFI_RETRY_MS` / `MQTT_RETRY_MS` | 30 s / 30 s | Mỗi lần thử kết nối broker có thể chặn ~3 s, nên thử thưa để đèn, còi, nút bị gián đoạn ít nhất |
 
 Cảnh báo tại chỗ dựa trên chu kỳ **đọc** (10 s), nên tăng chu kỳ gửi lên 5 phút không làm chậm đèn và còi.
 
