@@ -1,7 +1,7 @@
 /*
   PBL4 - Node cảm biến chất lượng không khí (ESP32)
   Đọc: PM2.5/PM10 (PMS5003 thật), CO2 (mô phỏng), DHT11 (thật)
-  Hiển thị lên LCD I2C 1602
+  Hiển thị lên LCD I2C 1602: AQI và tên mức tính giống hệt Backend/Dashboard (US EPA 2024)
   Gửi dữ liệu qua MQTT theo định dạng trong iot/mqtt_data_contract.md
 
   Thư viện cần cài:
@@ -31,9 +31,9 @@
 
 // ====== CẤU HÌNH THIẾT BỊ ======
 const char* DEVICE_ID        = "node-01";
-const char* WIFI_SSID        = "Imou-B97E14";      // <-- tên Wi-Fi (KHÔNG commit giá trị thật lên GitHub)
-const char* WIFI_PASSWORD    = "Kd6dG464";  // <-- mật khẩu Wi-Fi (KHÔNG commit giá trị thật lên GitHub)
-const char* MQTT_BROKER      = "192.168.10.4";        // <-- IP máy chạy Docker/Mosquitto (máy Quyến), xem bằng ipconfig
+const char* WIFI_SSID        = "Imou-B97E14";          // <-- điền tên Wi-Fi (KHÔNG commit giá trị thật lên GitHub)
+const char* WIFI_PASSWORD    = "Kd6dG464";     // <-- điền mật khẩu Wi-Fi (KHÔNG commit giá trị thật lên GitHub)
+const char* MQTT_BROKER      = "192.168.10.4";      // <-- IP máy chạy Docker/Mosquitto (máy Quyến), xem bằng ipconfig
 const int   MQTT_PORT        = 1883;
 const unsigned long READ_INTERVAL_MS = 10000;   // đọc cảm biến mỗi 10s (mỗi lần gửi luôn có số mới)
 const unsigned long SEND_INTERVAL_MS = 30000;   // gửi lên server mỗi 30s (chế độ demo; chạy lâu dài nên để 300000 = 5 phút)
@@ -75,6 +75,10 @@ unsigned long lastSendTime = 0;
 float latestPM25 = NAN, latestPM10 = NAN;
 int   latestCO2  = -1;
 float latestTemp = NAN, latestHumidity = NAN;
+
+// Bản ghi vừa gửi lên server - Dashboard hiển thị đúng bản ghi này, nên LCD cũng hiện theo nó
+bool  hasSent  = false;
+float sentPM25 = NAN, sentPM10 = NAN, sentTemp = NAN, sentHumidity = NAN;
 
 // ====== PMS5003 ======
 unsigned long lastPMSFrame = 0;   // thời điểm nhận frame hợp lệ gần nhất
@@ -205,12 +209,59 @@ void readAllSensors() {
                 pmsOk ? "THAT" : "LOI");
 }
 
+// ====== AQI THEO US EPA 2024 (giống hệt backend/app/aqi.py) ======
+const double AQI_BP[6][4] = {   // PM2.5 thấp, PM2.5 cao, AQI thấp, AQI cao
+  {0.0,   9.0,   0,   50},
+  {9.1,   35.4,  51,  100},
+  {35.5,  55.4,  101, 150},
+  {55.5,  125.4, 151, 200},
+  {125.5, 225.4, 201, 300},
+  {225.5, 325.4, 301, 500},
+};
+
+// Làm tròn giống hàm round() của Python (đúng 0.5 thì làm tròn về số chẵn)
+long roundHalfEven(double x) {
+  double f = floor(x);
+  double d = x - f;
+  if (d > 0.5) return (long)f + 1;
+  if (d < 0.5) return (long)f;
+  return ((long)f % 2 == 0) ? (long)f : (long)f + 1;
+}
+
+// Trả -1 nếu không có số đo hợp lệ
+int pm25ToAQI(float pm25) {
+  if (isnan(pm25) || pm25 < 0) return -1;
+  double v = round((double)pm25 * 10000.0) / 10000.0;        // số JSON gửi lên server (bỏ sai số float)
+  v = floor(round(v * 10.0 * 1e6) / 1e6) / 10.0;            // EPA cắt về 1 chữ số thập phân, như Backend
+  for (int i = 0; i < 6; i++) {
+    if (v <= AQI_BP[i][1]) {
+      if (v < AQI_BP[i][0]) v = AQI_BP[i][0];      // khoảng hở giữa hai mức (vd 9.05)
+      double a = (AQI_BP[i][3] - AQI_BP[i][2]) / (AQI_BP[i][1] - AQI_BP[i][0]) * (v - AQI_BP[i][0]) + AQI_BP[i][2];
+      return (int)roundHalfEven(a);
+    }
+  }
+  return 500;
+}
+
+// Tên mức theo AQI, cùng ranh giới với Dashboard (không dấu vì LCD 1602 không hiện được tiếng Việt)
+//   Tốt / Trung bình / Kém / Xấu / Rất xấu / Nguy hại
+const char* aqiLabel(int aqi) {
+  if (aqi < 0)    return "LOI";
+  if (aqi <= 50)  return "TOT";
+  if (aqi <= 100) return "TB";
+  if (aqi <= 150) return "KEM";
+  if (aqi <= 200) return "XAU";
+  if (aqi <= 300) return "RAT XAU";
+  return "NGUY HAI";
+}
+
 // ====== CẢNH BÁO ĐÈN + CÒI ======
 // Ngưỡng theo PM2.5 (US EPA 2024, cùng bảng với Backend):
 //   <= 35.4   : xanh     (Tốt / Trung bình)       - còi im
-//   35.5-55.4 : vàng     (Kém, nhóm nhạy cảm)     - kêu 1 tiếng khi vừa chuyển sang
-//   55.5-125.4: đỏ       (Xấu)                    - kêu 3 tiếng khi vừa chuyển sang
-//   > 125.4   : đỏ nháy  (Rất xấu / Nguy hại)     - kêu 3 tiếng, lặp lại mỗi 60s
+//   35.5-55.4 : vàng     (Kém, nhóm nhạy cảm)     - kêu 5 tiếng khi vừa chuyển sang
+//   55.5-125.4: đỏ       (Xấu)                    - kêu 7 tiếng khi vừa chuyển sang
+//   > 125.4   : đỏ nháy  (Rất xấu / Nguy hại)     - kêu 10 tiếng, lặp lại mỗi 60s
+// Cứ 2 phút báo cáo 1 lần (Serial + LCD + còi nếu mức từ vàng trở lên).
 // Dùng trung bình trượt 2 phút để đèn không chớp theo nhiễu, có trễ 2 ug/m3 khi hạ mức.
 #define LED_GREEN   18
 #define LED_YELLOW  19
@@ -223,6 +274,7 @@ const float HYSTERESIS    = 2.0;                      // phải giảm thêm 2 u
 const float LEVEL_UPPER[] = {35.4, 55.4, 125.4};      // ranh giới giữa các mức 0|1|2|3
 const unsigned long MUTE_MS          = 30UL * 60 * 1000;   // bấm nút: im 30 phút
 const unsigned long SEVERE_REPEAT_MS = 60000;
+const unsigned long REPORT_MS        = 120000UL;           // báo cáo định kỳ mỗi 2 phút
 const int   QUIET_FROM_HOUR = 22, QUIET_TO_HOUR = 6;       // ban đêm chỉ bật đèn, không kêu
 
 float pmHistory[AVG_SAMPLES];
@@ -234,8 +286,9 @@ bool  buzzerOn = false;
 unsigned long buzzerToggleAt = 0;
 bool  btnPrev = HIGH;
 unsigned long btnChangedAt = 0;
+unsigned long lcdHoldUntil = 0;                       // giữ màn hình báo cáo 2 phút đến thời điểm này
 
-const char* LEVEL_NAME[] = {"TOT", "KEM", "XAU", "RAT XAU"};   // hiện trên LCD, tối đa 7 ký tự
+const char* LEVEL_NAME[] = {"XANH", "VANG", "DO", "DO NHAY"};  // tên mức của ĐÈN (TB 2 phút), in ra Serial
 
 void alarmSetup() {
   pinMode(LED_GREEN, OUTPUT);
@@ -253,6 +306,16 @@ bool isQuietHours() {
   struct tm t;
   if (!getLocalTime(&t, 0)) return false;             // chưa có giờ thật thì không áp dụng
   return t.tm_hour >= QUIET_FROM_HOUR || t.tm_hour < QUIET_TO_HOUR;
+}
+
+// Số tiếng còi khi CHUYỂN LÊN từng mức: vàng=5, đỏ=7, đỏ nháy=10
+int beepsForLevel(int level) {
+  switch (level) {
+    case 1: return 5;
+    case 2: return 7;
+    case 3: return 10;
+    default: return 0;
+  }
 }
 
 void beep(int times) {
@@ -277,6 +340,22 @@ int levelFor(float pm, int current) {
   return lv;
 }
 
+// Báo cáo định kỳ mỗi 2 phút: in Serial + hiện LCD (còi do hàm gọi quyết định)
+void reportLevel(int level) {
+  float avg = averagePM25();
+  int avgAqi = pm25ToAQI(avg);
+  Serial.printf("Mức cảnh báo: đèn %s (PM2.5 TB 2 phút = %.1f, AQI %d %s)\n",
+                LEVEL_NAME[level], avg, avgAqi, aqiLabel(avgAqi));
+
+  // LCD: hiện báo cáo ngay, lần cập nhật 10s kế tiếp sẽ trả về màn hình thường
+  char l0[17], l1[17];
+  snprintf(l0, sizeof(l0), "TB2P:%-11s", aqiLabel(avgAqi));
+  snprintf(l1, sizeof(l1), "AQI%-3d PM %-6.1f", avgAqi, avg);
+  lcd.setCursor(0, 0); lcd.print(l0);
+  lcd.setCursor(0, 1); lcd.print(l1);
+  lcdHoldUntil = millis() + 9000;   // giữ ~9s, lần đọc 10s kế tiếp mới về màn thường
+}
+
 // Gọi sau mỗi lần đọc cảm biến (10s)
 void updateAlertLevel() {
   if (isnan(latestPM25)) {                 // cảm biến lỗi: xoá lịch sử, chuyển sang trạng thái lỗi
@@ -289,15 +368,24 @@ void updateAlertLevel() {
 
   int newLevel = levelFor(averagePM25(), alertLevel < 0 ? 0 : alertLevel);
   if (alertLevel >= 0 && newLevel > alertLevel) {     // chỉ kêu khi chất lượng xấu đi
-    beep(newLevel == 1 ? 1 : 3);
+    beep(beepsForLevel(newLevel));
     if (newLevel == 3) lastSevereBeep = millis();
   }
-  if (alertLevel < 0 && newLevel >= 2) {             // vừa có số đo đã ở mức xấu
-    beep(3);
+  if (alertLevel < 0 && newLevel >= 2) {             // vừa có số đo đã ở mức đỏ trở lên
+    beep(7);
     lastSevereBeep = millis();
   }
-  if (newLevel != alertLevel)
-    Serial.printf("Mức cảnh báo: %s (PM2.5 TB 2 phút = %.1f)\n", LEVEL_NAME[newLevel], averagePM25());
+
+  static unsigned long lastReport = 0;
+  bool changed = (newLevel != alertLevel);
+  if (changed || millis() - lastReport >= REPORT_MS) {   // đổi mức thì báo ngay, còn lại 2 phút báo 1 lần
+    lastReport = millis();
+    reportLevel(newLevel);
+    if (!changed && newLevel >= 1) {                     // đến hạn 2 phút mà mức không đổi: còi kêu theo mức
+      beep(beepsForLevel(newLevel));
+      if (newLevel == 3) lastSevereBeep = millis();      // tránh kêu đúp với lần nhắc 60s
+    }
+  }
   alertLevel = newLevel;
 }
 
@@ -322,10 +410,10 @@ void alarmLoop() {
   digitalWrite(LED_YELLOW, alertLevel == 1 || (alertLevel < 0 && blink));
   digitalWrite(LED_RED,    alertLevel == 2 || (alertLevel == 3 && blink));
 
-  // Mức rất xấu: nhắc lại mỗi 60s
+  // Mức rất xấu: nhắc lại mỗi 60s (10 tiếng)
   if (alertLevel == 3 && now - lastSevereBeep >= SEVERE_REPEAT_MS) {
     lastSevereBeep = now;
-    beep(3);
+    beep(10);
   }
 
   // Còi: mỗi tiếng kêu 150ms, nghỉ 150ms
@@ -342,30 +430,29 @@ void alarmLoop() {
 }
 
 // ====== HIỂN THỊ LÊN LCD ======
-// Mức 0 (đèn xanh) gồm 2 mức của Dashboard: Tốt (<= 9.0) và Trung bình (9.1-35.4),
-// nên tách chữ trên LCD theo PM2.5 TB 2 phút để khớp Dashboard. Các mức khác giữ theo đèn.
-const char* lcdLabel() {
-  if (alertLevel == 0) return averagePM25() <= 9.0 ? "TOT" : "TB";
-  return LEVEL_NAME[alertLevel];
-}
-
+// Màn thường hiện ĐÚNG bản ghi vừa gửi lên server, với AQI và tên mức tính giống hệt Backend,
+// nên LCD và Dashboard luôn cùng số AQI, cùng mức. Chưa gửi lần nào thì hiện số vừa đọc.
+//   Dòng 1: AQI:117 KEM       (thêm "IM" khi đang tắt tiếng)
+//   Dòng 2: PM:42 T:31 H:70%
 void updateLCD() {
-  lcd.setCursor(0, 0);
-  lcd.print("PM:");   // ngắn gọn để còn chỗ hiện mức cảnh báo
-  if (isnan(latestPM25)) lcd.print("--");
-  else lcd.print(latestPM25, 1);
-  lcd.print(" ");
-  lcd.print(alertLevel < 0 ? "LOI" : (millis() < muteUntil ? "IM" : lcdLabel()));
-  lcd.print("      ");
+  if (millis() < lcdHoldUntil) return;   // đang hiện báo cáo 2 phút
 
-  lcd.setCursor(0, 1);
-  lcd.print("T:");
-  if (isnan(latestTemp)) lcd.print("--");
-  else lcd.print(latestTemp, 1);
-  lcd.print("C H:");
-  if (isnan(latestHumidity)) lcd.print("--");
-  else lcd.print(latestHumidity, 0);
-  lcd.print("%  ");
+  float pm  = hasSent ? sentPM25     : latestPM25;
+  float tmp = hasSent ? sentTemp     : latestTemp;
+  float hum = hasSent ? sentHumidity : latestHumidity;
+  int aqi = pm25ToAQI(pm);
+
+  char l0[17], l1[17], a[5], p[5], tt[4], hh[4];
+  if (aqi < 0) strcpy(a, "--"); else snprintf(a, sizeof(a), "%d", aqi);
+  if (isnan(pm))  strcpy(p, "--");  else snprintf(p, sizeof(p), "%.0f", pm);
+  if (isnan(tmp)) strcpy(tt, "--"); else snprintf(tt, sizeof(tt), "%.0f", tmp);
+  if (isnan(hum)) strcpy(hh, "--"); else snprintf(hh, sizeof(hh), "%.0f", hum);
+
+  snprintf(l0, sizeof(l0), "AQI:%s %s%s", a, aqiLabel(aqi), millis() < muteUntil ? " IM" : "");
+  snprintf(l1, sizeof(l1), "PM:%s T:%s H:%s%%", p, tt, hh);
+
+  lcd.setCursor(0, 0); lcd.print(l0); for (int i = strlen(l0); i < 16; i++) lcd.print(' ');
+  lcd.setCursor(0, 1); lcd.print(l1); for (int i = strlen(l1); i < 16; i++) lcd.print(' ');
 }
 
 // ====== BUILD JSON PAYLOAD ======
@@ -457,13 +544,16 @@ void loop() {
     lastReadTime = now;
     readAllSensors();
     updateAlertLevel();
-    updateLCD();
+    updateLCD();   // nếu vừa có báo cáo 2 phút thì updateLCD() tự giữ màn báo cáo
   }
 
   // Gửi dữ liệu MQTT định kỳ
   if (now - lastSendTime >= SEND_INTERVAL_MS) {
     lastSendTime = now;
     String payload = buildPayload();
+    hasSent = true;
+    sentPM25 = latestPM25; sentPM10 = latestPM10; sentTemp = latestTemp; sentHumidity = latestHumidity;
+    updateLCD();   // LCD đổi cùng lúc với Dashboard
 
     Serial.println("=== JSON PAYLOAD ===");
     Serial.println(payload);

@@ -122,21 +122,39 @@ Nếu Backend đang chạy thì cửa sổ Backend in `Stored sensor reading for
 
 ## 7. Đọc trạng thái trên node
 
-**LCD:** dòng 1 là `PM:<PM2.5> <mức>`, dòng 2 là `T:<nhiệt độ>C H:<độ ẩm>%`.
-Mức là `TOT` (≤ 9,0), `TB` (trung bình, 9,1–35,4), `KEM`, `XAU` hoặc `RAT XAU`, cùng tên mức với Dashboard nhưng tính theo PM2.5 trung bình 2 phút. `IM` nghĩa là đang tắt tiếng; `LOI` là chưa có số đo hoặc PMS5003 lỗi.
+**LCD, màn thường:** hiện đúng bản ghi vừa gửi lên server, nên **cùng số AQI và cùng mức với Dashboard**
+(AQI tính giống hệt `backend/app/aqi.py`, đổi số mỗi 30 giây cùng lúc với Dashboard):
 
-**Đèn và còi** dựa trên **PM2.5 trung bình 2 phút** (12 lần đọc), không dựa trên AQI. Bảng mức theo US EPA 2024, giống Backend:
+```text
+AQI:117 KEM        <- thêm " IM" khi đang tắt tiếng
+PM:42 T:31 H:70%
+```
+
+Mức: `TOT` (AQI ≤ 50), `TB` (trung bình, ≤ 100), `KEM` (≤ 150), `XAU` (≤ 200), `RAT XAU` (≤ 300), `NGUY HAI`.
+`AQI:-- LOI` là chưa có số đo hoặc PMS5003 lỗi.
+
+**LCD, màn báo cáo 2 phút:** cứ 2 phút (hoặc ngay khi mức đèn thay đổi) hiện khoảng 9 giây mức của
+**PM2.5 trung bình 2 phút**, rồi trở lại màn thường:
+
+```text
+TB2P:KEM
+AQI113 PM 40.5
+```
+
+**Đèn và còi** dựa trên **PM2.5 trung bình 2 phút** (12 lần đọc), không dựa trên số tức thời, để đèn không nhấp nháy
+theo nhiễu. Vì vậy khi bụi vừa tăng, có thể LCD và Dashboard đã ghi `KEM` mà đèn vẫn xanh thêm 1–2 phút.
+Serial Monitor in tên mức đèn là `XANH`, `VANG`, `DO`, `DO NHAY`.
 
 | PM2.5 TB 2 phút (µg/m³) | Đèn | Còi |
 |---|---|---|
 | ≤ 35,4 | Xanh | Im |
-| 35,5 – 55,4 | Vàng | Kêu **1 tiếng** khi chuyển từ xanh sang (lúc vừa khởi động mà đã ở mức vàng thì không kêu) |
-| 55,5 – 125,4 | Đỏ | Kêu **3 tiếng** khi vừa chuyển sang |
-| > 125,4 | Đỏ nháy | Kêu 3 tiếng, **lặp lại mỗi 60 giây** |
+| 35,5 – 55,4 | Vàng | Kêu **5 tiếng** khi chuyển sang; còn ở mức này thì nhắc lại mỗi 2 phút |
+| 55,5 – 125,4 | Đỏ | Kêu **7 tiếng** khi chuyển sang; nhắc lại mỗi 2 phút |
+| > 125,4 | Đỏ nháy | Kêu **10 tiếng**, lặp lại mỗi 60 giây |
 | Chưa có số đo / PMS lỗi | Vàng nháy | Im |
 
 - Muốn hạ mức thì PM2.5 phải giảm thêm **2 µg/m³** dưới ranh giới, để đèn không nhảy qua lại liên tục.
-- Còi chỉ kêu khi chất lượng **xấu đi**, không kêu khi tốt lên.
+- Vừa khởi động mà đã ở mức đỏ trở lên thì kêu 7 tiếng ngay.
 - **Nút tắt tiếng:** bấm 1 lần thì im 30 phút (LCD hiện `IM`), đèn vẫn chạy; bấm lần nữa thì còi bật lại.
 - **22h–6h:** chỉ bật đèn, còi không kêu.
 - Vừa cấp điện: sáng cả 3 đèn và kêu 1 tiếng để tự kiểm tra.
