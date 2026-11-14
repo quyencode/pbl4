@@ -404,3 +404,19 @@ body {
   .aqi-ring-value { font-size: 40px; }
   .metric-value { font-size: 22px; }
 }
+
+/* Nút trong banner cảnh báo: tắt tiếng / bật âm thanh */
+.banner-action {
+  margin-left: auto;
+  flex-shrink: 0;
+  border: 1px solid #fecaca;
+  background: #fff;
+  color: #b91c1c;
+  font: inherit;
+  font-weight: 600;
+  border-radius: 999px;
+  padding: 6px 14px;
+  cursor: pointer;
+}
+.banner-action:hover { background: #fef2f2; }
+.banner-note { margin-left: auto; flex-shrink: 0; font-size: 0.85em; opacity: 0.8; }

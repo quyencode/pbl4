@@ -16,6 +16,7 @@ const HOUR_MS = 60 * 60 * 1000;
 const FORECAST_REFRESH_MS = 5 * 60 * 1000; // tự lấy lại dự báo mới mỗi 5 phút
 const FORECAST_STALE_MS = 2 * HOUR_MS;     // dự báo cũ hơn 2 giờ thì báo "đã cũ"
 const SOUND_COOLDOWN_MS = 10 * 1000;       // không kêu dồn dập khi nhiều cảnh báo đến cùng lúc
+const ALARM_REPEAT_MS = 15 * 1000;         // còn vượt ngưỡng thì kêu lại mỗi 15 giây cho tới khi hết hoặc bấm "Tắt tiếng"
 const DEFAULT_ALERT_CONFIG = { pm25_threshold: 55, aqi_threshold: 100 };
 
 const METRIC_LABEL = { pm25: "PM2.5", aqi: "AQI" };
@@ -113,6 +114,8 @@ export default function App() {
   const soundOnRef = useRef(false);
   const lastSoundAtRef = useRef(0);
   const wasExceededRef = useRef(false);
+  const [silenced, setSilenced] = useState(false);   // đã bấm "Tắt tiếng" cho đợt ô nhiễm hiện tại
+  const silencedRef = useRef(false);
 
   function notifySound() {
     const now = Date.now();
@@ -253,8 +256,28 @@ export default function App() {
       }
       notifySound();
     }
+    if (!isExceeded && silencedRef.current) {   // không khí đã ổn: lần vượt ngưỡng sau lại kêu bình thường
+      silencedRef.current = false;
+      setSilenced(false);
+    }
     wasExceededRef.current = isExceeded;
   }, [latest, alertConfig, backendAlerts]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Còn vượt ngưỡng thì kêu lại định kỳ, cho tới khi chất lượng không khí ổn hoặc người dùng bấm "Tắt tiếng"
+  useEffect(() => {
+    const timer = setInterval(() => {
+      if (wasExceededRef.current && soundOnRef.current && !silencedRef.current) {
+        lastSoundAtRef.current = Date.now();
+        playAlertSound();
+      }
+    }, ALARM_REPEAT_MS);
+    return () => clearInterval(timer);
+  }, []);
+
+  function silenceAlarm() {
+    silencedRef.current = true;
+    setSilenced(true);
+  }
 
   function toggleSound() {
     if (soundOn) {
@@ -343,6 +366,15 @@ export default function App() {
                 .join(", ")}
               . Hạn chế ra ngoài, đóng cửa sổ, đeo khẩu trang khi cần.
             </span>
+            {!testAlert && (
+              !soundOn ? (
+                <button type="button" className="banner-action" onClick={toggleSound}>🔔 Bật âm thanh</button>
+              ) : silenced ? (
+                <span className="banner-note">Đã tắt tiếng, sẽ kêu lại ở đợt vượt ngưỡng sau</span>
+              ) : (
+                <button type="button" className="banner-action" onClick={silenceAlarm}>🔕 Tắt tiếng</button>
+              )
+            )}
           </div>
         )}
 
